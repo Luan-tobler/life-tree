@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Life Tree — Cultive sua árvore da vida" },
+      { name: "description", content: "Life Tree é um protótipo interativo onde você cultiva uma árvore que cresce com seus hábitos, humor e clima." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Life Tree — Cultive sua árvore da vida" },
+      { property: "og:description", content: "Life Tree é um protótipo interativo onde você cultiva uma árvore que cresce com seus hábitos, humor e clima." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Life Tree — Cultive sua árvore da vida" },
+      { name: "twitter:description", content: "Life Tree é um protótipo interativo onde você cultiva uma árvore que cresce com seus hábitos, humor e clima." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/038ff7b7-421a-40af-8e62-121789717582" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/038ff7b7-421a-40af-8e62-121789717582" },
     ],
     links: [
       {

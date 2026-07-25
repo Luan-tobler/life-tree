@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Um protótipo interativo onde você cultiva uma árvore que cresce com seus hábitos, humor e clima.",
+          "Life Tree é um protótipo interativo onde você cultiva uma árvore que cresce com seus hábitos, humor e clima.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
