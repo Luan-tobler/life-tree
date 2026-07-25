@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raiz — Protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFF3EA;--scene-bg-start:#EFF3EA;--scene-bg-end:#DCE8DA;--time-overlay:rgba(107,144,113,0.10);
+    --tree-bg-start:rgba(255,255,255,0.75);--tree-bg-end:rgba(255,255,255,0.20);--bg-card:#FBFCF9;
+    --ink:#223327;--ink-soft:#5C6B5E;--ink-faint:#8A978B;--primary:#2F5233;--primary-light:#6B9071;
+    --primary-pale:#DCE8DA;--accent:#C97F4F;--accent-soft:#F0C9A0;--accent-pale:#FBE9D6;--trunk:#7A5230;
+    --line:#DCE3D6;--tree-primary:var(--primary);--tree-primary-light:var(--primary-light);
+    --tree-accent:var(--accent);--tree-accent-soft:var(--accent-soft);--tree-accent-pale:var(--accent-pale);
+    --tree-trunk:var(--trunk);
+    --font-display:'Fraunces',serif;--ease:cubic-bezier(.25,.9,.35,1);--ease-bounce:cubic-bezier(.34,1.56,.64,1);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;min-height:100%;background:linear-gradient(180deg,var(--scene-bg-start),var(--scene-bg-end));color:var(--ink);font-family:'Inter',system-ui,Arial,sans-serif;transition:background .5s var(--ease),color .4s var(--ease);-webkit-font-smoothing:antialiased;}
+  body{background-color:var(--bg);background-image:radial-gradient(ellipse 800px 460px at 15% -8%, var(--time-overlay), transparent 55%);}
+  ::selection{background:var(--primary-pale);color:var(--primary);}
+  button,input[type=range],input[type=text],input[type=number],select{font:inherit;}
+  button{border:none;cursor:pointer;border-radius:999px;padding:11px 20px;background:linear-gradient(135deg,var(--primary-light),var(--primary));color:#fff;font-weight:600;letter-spacing:.1px;box-shadow:0 4px 14px rgba(47,82,51,.24);transition:transform .18s var(--ease-bounce),box-shadow .2s var(--ease),background .3s var(--ease);}
+  button:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(47,82,51,.3);}
+  button:active{transform:translateY(0) scale(.97);}
+  .app-shell{display:flex;flex-direction:column;min-height:100vh;animation:appIn .5s var(--ease);}
+  @keyframes appIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:28px 24px 20px;}
+  .header h1{margin:0;font-size:2.3rem;font-family:var(--font-display);font-weight:600;color:var(--primary);letter-spacing:.1px;}
+  .header p{margin:8px 0 0;color:var(--ink-soft);max-width:480px;line-height:1.5;}
+  .header-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .header-actions button{background:var(--bg-card);color:var(--ink);box-shadow:0 1px 2px rgba(34,51,39,.05),0 2px 8px rgba(34,51,39,.05);border:1px solid var(--line);padding:9px 16px;font-size:.88rem;}
+  .header-actions button:hover{border-color:var(--primary-light);box-shadow:0 4px 12px rgba(34,51,39,.08);}
+  
+  .pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;align-items:center;}
+  .pill{background:var(--bg-card);padding:9px 15px;border-radius:999px;font-size:.85rem;font-weight:600;box-shadow:0 1px 2px rgba(34,51,39,.05),0 6px 18px rgba(34,51,39,.06);color:var(--ink-soft);border:1px solid rgba(255,255,255,.6);transition:background .4s var(--ease),color .4s var(--ease);}
+  .pill#stage-label{color:var(--primary);font-family:var(--font-display);font-weight:600;}
+  
+  .weather-btn{padding:6px 14px;font-size:.8rem;background:var(--bg-card);color:var(--ink-soft);border:1px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.04);}
+  .weather-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+  .scene{padding:8px 20px 44px;display:flex;flex-direction:column;gap:24px;align-items:center;flex:1;}
+  .tree-card{width:100%;max-width:780px;background:linear-gradient(180deg,var(--tree-bg-start),var(--tree-bg-end));backdrop-filter:blur(14px);border-radius:32px;padding:26px 26px 24px;box-shadow:0 2px 4px rgba(20,40,25,.06),0 26px 65px rgba(20,40,25,.14);border:1px solid rgba(255,255,255,.65);transition:background .5s var(--ease),box-shadow .3s var(--ease);position:relative;}
+  
+  #tree-stage{width:100%;min-height:400px;display:flex;justify-content:center;align-items:flex-end;position:relative;border-radius:26px;overflow:hidden;background:radial-gradient(ellipse 460px 180px at 50% 100%, rgba(0,0,0,.09), transparent 75%);}
+  #tree-stage::before{content:'';position:absolute;top:0;left:0;right:0;height:65%;background:radial-gradient(ellipse 340px 180px at 30% 0%, rgba(255,255,255,.5), transparent 80%);pointer-events:none;z-index:1;}
+  #tree-stage::after{content:'';position:absolute;left:6%;right:6%;bottom:8px;height:20px;background:radial-gradient(ellipse closest-side, rgba(0,0,0,.2), transparent 85%);border-radius:50%;pointer-events:none;z-index:1;}
+  #tree-stage > div{width:100%;height:100%;display:flex;justify-content:center;align-items:flex-end;position:relative;z-index:2;}
+  #tree-stage svg{width:auto;height:380px;max-height:100%;display:block;margin:0 auto;filter:drop-shadow(0 16px 24px rgba(20,35,25,.18));animation:organicSway 7s ease-in-out infinite alternate;transform-origin:bottom center;}
+
+  /* TREE EVOLUTION ANIMATION */
+  .tree-evolving svg{animation:treeEvolvePulse 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) !important;}
+  @keyframes treeEvolvePulse{
+    0%{transform:scale(0.82) translateY(18px);filter:brightness(1.6) drop-shadow(0 0 25px rgba(255,215,0,0.8));}
+    50%{transform:scale(1.12) translateY(-10px);filter:brightness(1.3) drop-shadow(0 0 45px rgba(255,215,0,0.9));}
+    100%{transform:scale(1) translateY(0);filter:drop-shadow(0 16px 24px rgba(20,35,25,.18));}
+  }
+
+  .evolution-badge{position:absolute;top:20%;left:50%;transform:translate(-50%,-50%) scale(0.5);background:linear-gradient(135deg,#FFD700,#FF9800);color:#3A2400;font-family:var(--font-display);font-weight:700;font-size:1.4rem;padding:12px 28px;border-radius:999px;box-shadow:0 10px 30px rgba(255,152,0,0.5);z-index:10;pointer-events:none;opacity:0;animation:badgePop 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;}
+  @keyframes badgePop{
+    0%{opacity:0;transform:translate(-50%,-20%) scale(0.4);}
+    25%{opacity:1;transform:translate(-50%,-50%) scale(1.15);}
+    75%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+    100%{opacity:0;transform:translate(-50%,-80%) scale(0.9);}
+  }
+
+  #weather-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;border-radius:26px;}
+
+  @keyframes organicSway{0%{transform:rotate(-1deg) skewX(-0.3deg);}50%{transform:rotate(0.3deg) skewX(0.1deg);}100%{transform:rotate(1deg) skewX(0.3deg);}}
+  @keyframes fireflyPulse{0%,100%{opacity:0.25;transform:scale(0.8) translateY(0);}50%{opacity:1;transform:scale(1.3) translateY(-6px);}}
+  @keyframes petalDrift{0%{transform:translate(0,0) rotate(0deg);opacity:0.9;}100%{transform:translate(28px,65px) rotate(180deg);opacity:0.1;}}
+  
+  .progress-row{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-top:20px;flex-wrap:wrap;}
+  #stage-sub{font-size:.9rem;color:var(--ink-faint);font-weight:600;margin-bottom:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.3px;}
+  .progress-track{width:100%;max-width:520px;height:12px;border-radius:999px;background:var(--primary-pale);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.08);}
+  #xp-fill{width:0;height:100%;background:linear-gradient(90deg,var(--primary-light),var(--primary));border-radius:999px;transition:width .5s var(--ease);position:relative;}
+  #xp-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 65%);}
+  .progress-info{display:flex;flex-direction:column;gap:6px;text-align:right;min-width:160px;}
+  .progress-info span{font-size:.85rem;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  
+  .controls{width:100%;max-width:780px;display:grid;gap:20px;background:var(--bg-card);border-radius:28px;padding:26px 26px 28px;box-shadow:0 2px 4px rgba(20,40,25,.05),0 20px 48px rgba(20,40,25,.08);border:1px solid rgba(255,255,255,.6);}
+  .controls-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .controls-header h3{margin:0;font-size:1.1rem;font-family:var(--font-display);color:var(--primary);}
+  .control-row{display:grid;gap:10px;}
+  .control-row label{display:flex;justify-content:space-between;font-size:.95rem;font-weight:600;color:var(--ink-soft);}
+  .control-row label span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary);background:var(--primary-pale);padding:3px 10px;border-radius:8px;font-size:.85rem;}
+  input[type=range]{width:100%;accent-color:var(--primary);height:6px;border-radius:999px;cursor:pointer;}
+  #btn-confirmar{width:100%;max-width:260px;justify-self:center;padding:14px 22px;font-size:1rem;margin-top:4px;}
+  
+  .month-grid{display:grid;grid-template-columns:repeat(6, 1fr);gap:10px;margin-top:16px;}
+  .day-box{background:var(--bg-card);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.85rem;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .18s var(--ease);}
+  .day-box:hover{transform:scale(1.05);}
+  .day-box.done{border-color:var(--primary);background:var(--primary-pale);color:var(--primary);}
+  .day-box.shield{border-color:var(--accent);background:var(--accent-pale);color:var(--accent);}
+  .day-box.fail{border-color:#E74C3C;background:#FADBD8;color:#922B21;}
+
+  .score-result{position:fixed;top:20px;right:20px;z-index:60;min-width:280px;background:var(--bg-card);backdrop-filter:blur(18px);border:1px solid var(--line);box-shadow:0 8px 16px rgba(15,31,21,.1),0 24px 46px rgba(15,31,21,.14);border-radius:26px;padding:22px 18px 18px 18px;opacity:0;transform:translateY(-14px) scale(.97);pointer-events:none;transition:opacity .25s var(--ease-bounce),transform .25s var(--ease-bounce);}
+  .score-close{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--bg-card);color:var(--ink);font-size:1.2rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .18s var(--ease),transform .18s var(--ease-bounce);box-shadow:none;padding:0;}
+  .score-close:hover{transform:scale(1.08);box-shadow:0 2px 6px rgba(0,0,0,.08);}
+  .score-result.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+  .score-result strong{display:block;font-size:2.6rem;color:var(--primary);line-height:1;font-family:var(--font-display);font-weight:600;}
+  .score-bar-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:13px;font-size:.78rem;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  .track{width:100%;height:9px;border-radius:999px;background:rgba(0,0,0,.07);overflow:hidden;}
+  .fill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary-light),var(--primary));}
+  
+  .overlay{position:fixed;inset:0;background:rgba(19,30,22,.4);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px;z-index:55;animation:overlayIn .25s var(--ease);}
+  @keyframes overlayIn{from{opacity:0;}to{opacity:1;}}
+  .overlay.open{display:flex;}
+  .panel{width:100%;max-width:760px;background:var(--bg-card);color:var(--ink);border-radius:28px;padding:28px;box-shadow:0 12px 24px rgba(12,28,22,.12),0 30px 70px rgba(12,28,22,.16);max-height:calc(100vh - 60px);overflow:auto;animation:panelIn .35s var(--ease-bounce);border:1px solid var(--line);}
+  @keyframes panelIn{from{opacity:.4;transform:translateY(16px) scale(.98);}to{opacity:1;transform:none;}}
+  .panel button{border-radius:18px;}
+  .panel h2{margin-top:0;font-size:1.7rem;font-family:var(--font-display);font-weight:600;color:var(--primary);}
+  
+  /* UNLOCKED THEME POP-UP MODAL */
+  #unlock-preview-card{width:100%;height:220px;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:16px 0;position:relative;overflow:hidden;box-shadow:0 8px 25px rgba(0,0,0,0.12);}
+  
+  .theme-group-title{font-size:1.15rem;font-family:var(--font-display);color:var(--primary);margin:24px 0 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding-bottom:6px;}
+  .theme-section-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;}
+  .theme-card{background:var(--bg-card);border:1px solid var(--line);border-radius:22px;padding:14px;cursor:pointer;transition:transform .18s var(--ease-bounce),border-color .18s var(--ease),box-shadow .18s var(--ease);}
+  .theme-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,40,25,.1);}
+  .theme-card.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary) inset,0 12px 28px rgba(47,82,51,.14);}
+  .theme-card.locked{filter:grayscale(1);opacity:.5;cursor:not-allowed;}
+  .theme-card.locked:hover{transform:none;box-shadow:none;}
+  .theme-swatch{height:54px;border-radius:16px;margin-bottom:10px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);}
+  .theme-info b{display:block;margin-bottom:4px;font-size:.95rem;color:var(--ink);}
+  .theme-info span{font-size:.8rem;color:var(--ink-soft);line-height:1.3;}
+  .theme-tag{display:inline-flex;margin-top:8px;background:var(--primary);color:#fff;padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:600;}
+
+  .admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:18px;}
+  .admin-grid label{display:flex;flex-direction:column;gap:8px;font-size:.85rem;color:var(--ink-soft);font-weight:600;}
+  .admin-grid input{padding:11px 14px;border:1px solid var(--line);background:var(--bg-card);color:var(--ink);border-radius:14px;font-family:'IBM Plex Mono',monospace;font-size:.9rem;transition:border-color .2s var(--ease);}
+  .admin-grid input:focus{outline:none;border-color:var(--primary-light);}
+  .admin-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(8px) scale(.96);padding:12px 20px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:.9rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .3s var(--ease-bounce),transform .3s var(--ease-bounce);z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:88%;text-align:center;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+  @media(max-width:720px){.header{padding:20px 16px 14px;flex-direction:column;}.scene{padding:4px 16px 32px;}.tree-card{padding:20px 18px;}.controls{padding:20px 18px;}.panel{padding:22px;}.admin-grid{grid-template-columns:1fr;}.month-grid{grid-template-columns:repeat(3, 1fr);}.progress-row{flex-direction:column;align-items:flex-start;}.progress-info{text-align:left;min-width:0;}.score-result{left:16px;right:16px;top:16px;min-width:0;}}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="header">
+    <div>
+      <p style="margin:0 0 8px;color:var(--ink-soft);font-size:.88rem;letter-spacing:.08em;text-transform:uppercase;">Protótipo</p>
+      <h1 style="margin:0;font-size:2.3rem;">Raiz</h1>
+      <p>Transforme hábitos diários em crescimento de árvore.</p>
+    </div>
+    <div class="header-actions">
+      <button id="historico-toggle" type="button">📅 Histórico</button>
+      <button id="audio-toggle" type="button">🔊 Som: Off</button>
+      <button id="temas-toggle" type="button">🎨 Temas</button>
+      <button id="admin-toggle" type="button">⚡ Admin</button>
+    </div>
+  </header>
+  <main class="scene">
+    <div class="pills">
+      <span class="pill" id="day-pill">dia 1</span>
+      <span class="pill" id="month-pill">mês 1</span>
+      <span class="pill" id="stage-label">Semente</span>
+      <span class="pill" id="shield-status">0 escudos</span>
+      <div style="display:inline-flex;gap:4px;margin-left:6px;">
+        <button class="weather-btn active" data-weather="sol" type="button">☀️ Sol</button>
+        <button class="weather-btn" data-weather="chuva" type="button">🌧️ Chuva</button>
+        <button class="weather-btn" data-weather="vento" type="button">🍃 Vento</button>
+        <button class="weather-btn" data-weather="neve" type="button">❄️ Neve</button>
+      </div>
+    </div>
+    <section class="tree-card">
+      <div id="tree-stage">
+        <canvas id="weather-canvas"></canvas>
+      </div>
+      <div class="progress-row">
+        <div style="flex:1;min-width:220px;">
+          <div id="stage-sub">nível 1</div>
+          <div class="progress-track"><div id="xp-fill"></div></div>
+        </div>
+        <div class="progress-info">
+          <span id="xp-current">0 xp</span>
+          <span id="xp-next">próximo nível: 55 xp</span>
+        </div>
+      </div>
+    </section>
+    <section class="controls">
+      <div class="controls-header">
+        <h3>Registrar Hábitos do Dia</h3>
+      </div>
+      <div id="controls-list" style="display:grid;gap:20px;"></div>
+      <button id="btn-confirmar" type="button">Confirmar dia</button>
+    </section>
+  </main>
+</div>
+
+<!-- Score Result Modal -->
+<div id="score-result" class="score-result">
+  <strong id="score-big">0</strong>
+  <button id="score-close" class="score-close" type="button" aria-label="Fechar">×</button>
+  <div id="score-breakdown"></div>
+</div>
+
+<!-- History Modal -->
+<div id="historico-panel" class="overlay">
+  <div class="panel">
+    <button id="historico-close" type="button">Fechar</button>
+    <h2>Histórico do Mês</h2>
+    <p style="color:var(--ink-soft)">Acompanhe o registro visual da sua jornada de 30 dias neste mês.</p>
+    <div id="historico-grid" class="month-grid"></div>
+  </div>
+</div>
+
+<!-- Themes Modal -->
+<div id="temas-panel" class="overlay">
+  <div class="panel">
+    <button id="temas-close" type="button">Fechar</button>
+    <h2>Personalizar Árvore & Cenário 🎨</h2>
+    <p style="color:var(--ink-soft)">Escolha a espécie da sua árvore e a atmosfera do ambiente separadamente!</p>
+    <div id="temas-stats" style="margin-bottom:16px;font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--ink-soft);"></div>
+    <div id="temas-lista"></div>
+  </div>
+</div>
+
+<!-- Theme Unlock Pop-up Modal -->
+<div id="theme-unlock-panel" class="overlay">
+  <div class="panel" style="max-width:440px;text-align:center;">
+    <span style="font-size:3rem;display:block;margin-bottom:8px;">🎉✨</span>
+    <h2 id="unlock-title" style="margin-bottom:6px;">Novo Tema Desbloqueado!</h2>
+    <p id="unlock-desc" style="color:var(--ink-soft);font-size:.95rem;margin-top:0;">Você conquistou este tema por consistência nos seus hábitos!</p>
+    <div id="unlock-preview-card"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:20px;">
+      <button id="unlock-apply-btn" type="button">✨ Aplicar Agora</button>
+      <button id="unlock-close-btn" type="button" style="background:var(--bg-card);color:var(--ink);border:1px solid var(--line);">Depois</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Modal -->
+<div id="admin-panel" class="overlay">
+  <div class="panel">
+    <button id="admin-close" type="button">Fechar</button>
+    <h2>Painel Admin</h2>
+    <div class="admin-grid">
+      <label>Dia<input id="adm-day" type="number" min="1" value="1"></label>
+      <label>Streak<input id="adm-streak" type="number" min="0" value="0"></label>
+      <label>Mês<input id="adm-month" type="number" min="1" value="1"></label>
+      <label>XP do mês<input id="adm-monthxp" type="number" min="0" value="0"></label>
+      <label>Meses com frutos<input id="adm-monthsfruit" type="number" min="0" value="0"></label>
+      <label>Escudos<input id="adm-shields" type="number" min="0" value="0"></label>
+      <label>Bom streak<input id="adm-goodstreak" type="number" min="0" value="0"></label>
+      <label>Dias para pular<input id="adm-skip-days" type="number" min="1" value="1"></label>
+      <label>Score fixo<input id="adm-skip-score" type="number" min="0" max="100" value="60"></label>
+    </div>
+    <div class="admin-actions">
+      <button id="adm-apply" type="button">Aplicar</button>
+      <button id="adm-skip" type="button">Pular dias</button>
+      <button id="adm-unlock-all" type="button" style="background:linear-gradient(135deg,#9C27B0,#E91E63);">🔓 Desbloquear Todos os Temas</button>
+      <button id="adm-force-rebirth" type="button">Forçar renascimento</button>
+      <button id="adm-reset" type="button">Resetar tudo</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const MONTH_LENGTH = 30;
+const DIAS_POR_ESCUDO = 5;
+const MAX_ESCUDOS = 2;
+
+let state = {
+  day: 1,
+  streak: 0,
+  goodStreakForShield: 0,
+  shields: 0,
+  log: [],
+  month: 1,
+  monthXp: 0,
+  monthsWithFruit: 0,
+  totalXpLifetime: 0,
+  unlockedThemes: ['padrao'],
+  activeSceneTheme: 'padrao',
+  activeTreeTheme: 'padrao',
+  activeWeather: 'sol',
+  soundEnabled: false,
+  previousLevel: 1,
+  habits: [
+    { id: 'sono', label: 'Sono', min: 0, max: 12, step: 0.5, val: 8, unit: 'h' },
+    { id: 'tela', label: 'Tela', min: 0, max: 240, step: 10, val: 60, unit: ' min' },
+    { id: 'exercicio', label: 'Exercício', min: 0, max: 120, step: 5, val: 15, unit: ' min' },
+    { id: 'meditacao', label: 'Meditação', min: 0, max: 60, step: 5, val: 10, unit: ' min' }
+  ],
+  lastHabitScores: { sono: 35, tela: 25, exercicio: 15, meditacao: 10 }
+};
+
+function scoreSono(horas) {
+  const idealMin = 7.5, idealMax = 8.5;
+  if (horas >= idealMin && horas <= idealMax) return 35;
+  const dist = horas < idealMin ? (idealMin - horas) : (horas - idealMax);
+  return Math.max(0, 35 - Math.pow(dist, 1.6) * 6);
+}
+function scoreTela(minutos) {
+  return Math.max(0, 25 * Math.exp(-minutos / 55));
+}
+function scoreExercicio(minutos) {
+  return Math.min(30, 30 * (1 - Math.exp(-minutos / 22)));
+}
+function scoreMeditacao(minutos) {
+  return Math.min(10, 10 * (1 - Math.exp(-minutos / 10)));
+}
+
+function calcularScoreDia(habitsObj) {
+  const s = scoreSono(habitsObj.sono || 8);
+  const t = scoreTela(habitsObj.tela || 60);
+  const e = scoreExercicio(habitsObj.exercicio || 15);
+  const m = scoreMeditacao(habitsObj.meditacao || 10);
+  const total = Math.round(Math.min(100, s + t + e + m));
+  return {
+    total,
+    partes: { sono: Math.round(s), tela: Math.round(t), exercicio: Math.round(e), meditacao: Math.round(m) }
+  };
+}
+
+function xpParaNivel(nivel) {
+  return Math.round(55 * Math.pow(nivel, 1.85));
+}
+function nivelAPartirDeXp(xp) {
+  let nivel = 1;
+  while (xpParaNivel(nivel + 1) <= xp) nivel++;
+  return nivel;
+}
+function estagioPorNivel(nivel) {
+  if (nivel <= 1) return { key: 'semente', label: 'Semente' };
+  if (nivel <= 2) return { key: 'broto', label: 'Broto' };
+  if (nivel <= 4) return { key: 'muda', label: 'Muda' };
+  if (nivel <= 5) return { key: 'jovem', label: 'Árvore jovem' };
+  if (nivel <= 6) return { key: 'madura', label: 'Árvore madura' };
+  return { key: 'flor', label: 'Árvore florescendo' };
+}
+
+// SPECIES-SPECIFIC HABIT FRUIT & FLOWER ENGINE
+function habitBerrySono(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/10})"><circle cx="0" cy="0" r="7" fill="#4B306A"/><circle cx="-2" cy="-2" r="3" fill="#7D5BA6"/><path d="M -4 -7 Q 0 -11 4 -7 Z" fill="${c.light}"/></g>`;
+}
+function habitOrangeTela(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/10})"><circle cx="0" cy="0" r="7.5" fill="#E67E22"/><circle cx="-2" cy="-2" r="3" fill="#F39C12"/><circle cx="0" cy="-7.5" r="2" fill="${c.primary}"/></g>`;
+}
+function habitAppleExercicio(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/10})"><path d="M 0 -7 C 5 -10 9 -4 7 3 C 5 8 0 7 0 7 C 0 7 -5 8 -7 3 C -9 -4 -5 -10 0 -7 Z" fill="#C0392B"/><path d="M 0 -7 Q 3 -10 4 -12" stroke="${c.trunk}" stroke-width="1.8" fill="none"/></g>`;
+}
+function habitLotusMeditacao(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/10})"><path d="M 0 6 C -8 0 -9 -8 0 -10 C 9 -8 8 0 0 6 Z" fill="#F48FB1"/><path d="M -3 6 C -10 2 -8 -6 0 -8 Z" fill="#F06292"/><circle cx="0" cy="-2" r="2.5" fill="#FFF59D"/></g>`;
+}
+function habitSakuraBlossom(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/9})">
+    <circle cx="0" cy="0" r="9" fill="rgba(255,255,255,0.4)"/>
+    <path d="M 0 -8 C 4 -12 8 -6 0 0 C -8 -6 -4 -12 0 -8 Z" fill="#FF80AB"/>
+    <path d="M 8 0 C 12 4 6 8 0 0 C 6 -8 12 -4 8 0 Z" fill="#FF4081"/>
+    <path d="M 0 8 C -5 12 -8 6 0 0 C 8 6 4 12 0 8 Z" fill="#F50057"/>
+    <path d="M -8 0 C -12 -4 -6 -8 0 0 C -6 8 -12 4 -8 0 Z" fill="#FF80AB"/>
+    <circle cx="0" cy="0" r="3" fill="#FFF59D"/>
+  </g>`;
+}
+function habitYellowIpeBlossom(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/9})">
+    <circle cx="0" cy="0" r="9.5" fill="#FFD54F" opacity="0.4"/>
+    <path d="M 0 -8 C 5 -12 9 -5 0 0 C -9 -5 -5 -12 0 -8 Z" fill="#FFD700"/>
+    <path d="M 8 0 C 12 5 5 9 0 0 C 5 -9 12 -5 8 0 Z" fill="#FFC107"/>
+    <path d="M 0 8 C -5 12 -9 5 0 0 C 9 5 5 12 0 8 Z" fill="#FFB300"/>
+    <path d="M -8 0 C -12 -5 -5 -9 0 0 C -5 9 -12 5 -8 0 Z" fill="#FFE082"/>
+    <circle cx="0" cy="0" r="3.5" fill="#FFF8E1"/>
+  </g>`;
+}
+function habitOceanPearl(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/9})">
+    <circle cx="0" cy="0" r="8" fill="#80DEEA"/>
+    <circle cx="-2.5" cy="-2.5" r="3.5" fill="#E0F7FA"/>
+    <circle cx="0" cy="0" r="8" stroke="#00ACC1" stroke-width="1" fill="none"/>
+  </g>`;
+}
+function habitCoralFlower(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/9})">
+    <circle cx="0" cy="0" r="7.5" fill="#FF7043"/>
+    <circle cx="-2" cy="-2" r="3" fill="#FFAB91"/>
+    <circle cx="0" cy="0" r="3" fill="#FFF59D"/>
+  </g>`;
+}
+function habitPineCone(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/9})">
+    <ellipse cx="0" cy="0" rx="7" ry="10" fill="#6D4C41"/>
+    <path d="M -6 -4 Q 0 -8 6 -4 M -7 0 Q 0 -4 7 0 M -5 4 Q 0 1 5 4" stroke="#D7CCC8" stroke-width="1.8" fill="none"/>
+    <circle cx="-2" cy="-2" r="2" fill="#FFD54F" opacity="0.8"/>
+  </g>`;
+}
+function habitStardustOrb(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/9})">
+    <circle cx="0" cy="0" r="8.5" fill="#4DD0E1"/>
+    <circle cx="-2.5" cy="-2.5" r="4" fill="#E0F7FA"/>
+    <circle cx="0" cy="0" r="9" stroke="#80DEEA" stroke-width="1.2" fill="none" opacity="0.8"/>
+  </g>`;
+}
+function habitMapleSamara(cx, cy, r, c) {
+  return `<g transform="translate(${cx},${cy}) scale(${r/9})">
+    <path d="M 0 0 C 8 -10 14 -4 8 4 C 4 8 0 0 0 0 Z" fill="#FFB74D"/>
+    <path d="M 0 0 C -8 -10 -14 -4 -8 4 C -4 8 0 0 0 0 Z" fill="#FFA726"/>
+    <circle cx="0" cy="0" r="3" fill="#E65100"/>
+  </g>`;
+}
+
+function renderHabitFruits(c, speciesKey = 'carvalho') {
+  const p = state.lastHabitScores;
+  let f1 = habitBerrySono, f2 = habitOrangeTela;
+
+  if (speciesKey === 'cerejeira') {
+    f1 = habitSakuraBlossom; f2 = habitLotusMeditacao;
+  } else if (speciesKey === 'ipe') {
+    f1 = habitYellowIpeBlossom; f2 = habitLotusMeditacao;
+  } else if (speciesKey === 'costeira') {
+    f1 = habitOceanPearl; f2 = habitCoralFlower;
+  } else if (speciesKey === 'pinheiro') {
+    f1 = habitPineCone; f2 = habitStardustOrb;
+  } else if (speciesKey === 'bordo') {
+    f1 = habitMapleSamara; f2 = habitOrangeTela;
+  } else {
+    const list = [
+      { key: 'sono', val: p.sono / 35, fn: habitBerrySono },
+      { key: 'tela', val: p.tela / 25, fn: habitOrangeTela },
+      { key: 'exercicio', val: p.exercicio / 30, fn: habitAppleExercicio },
+      { key: 'meditacao', val: p.meditacao / 10, fn: habitLotusMeditacao }
+    ];
+    list.sort((a,b) => b.val - a.val);
+    f1 = list[0].fn; f2 = list[1].fn;
+  }
+
+  let fruits = '';
+  if (speciesKey === 'costeira') {
+    fruits += f1(110, 95, 9.5, c);
+    fruits += f2(290, 95, 9.5, c);
+    fruits += f1(150, 75, 10, c);
+    fruits += f2(250, 75, 9, c);
+    fruits += f1(200, 50, 10.5, c);
+  } else if (speciesKey === 'pinheiro') {
+    fruits += f1(140, 135, 10, c);
+    fruits += f2(260, 135, 10, c);
+    fruits += f1(160, 95, 9.5, c);
+    fruits += f2(240, 95, 9.5, c);
+    fruits += f1(180, 60, 9, c);
+  } else {
+    fruits += f1(105, 95, 9.5, c);
+    fruits += f2(295, 95, 9.5, c);
+    fruits += f1(200, 32, 10.5, c);
+    fruits += f2(140, 60, 9, c);
+    fruits += f1(260, 60, 9, c);
+  }
+  return fruits;
+}
+
+function getDefs(id, c) {
+  return `
+  <defs>
+    <linearGradient id="${id}_trunk" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="${c.trunk}" stop-opacity="0.98"/>
+      <stop offset="35%" stop-color="${c.trunk}"/>
+      <stop offset="75%" stop-color="${c.trunk}"/>
+      <stop offset="100%" stop-color="${c.trunk}" stop-opacity="0.6"/>
+    </linearGradient>
+    <radialGradient id="${id}_seed_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="${c.light}" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="${c.primary}" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="${id}_crown_glow" cx="50%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="${c.light}" stop-opacity="0.5"/>
+      <stop offset="70%" stop-color="${c.primary}" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="${c.primary}" stop-opacity="0"/>
+    </radialGradient>
+  </defs>`;
+}
+
+function getGroundBase(c, speciesKey = 'carvalho') {
+  if (speciesKey === 'costeira') {
+    return `
+      <ellipse cx="200" cy="336" rx="145" ry="17" fill="rgba(42,111,119,0.12)"/>
+      <path d="M 35 345 Q 120 320 200 322 Q 280 324 365 345 Z" fill="${c.pale}" opacity="0.95"/>
+      <path d="M 65 342 Q 135 324 200 326 Q 265 328 335 342 Z" fill="${c.light}" opacity="0.6"/>
+      <ellipse cx="200" cy="332" rx="55" ry="8" fill="rgba(42,111,119,0.2)"/>
+    `;
+  }
+  if (speciesKey === 'pinheiro') {
+    return `
+      <ellipse cx="200" cy="336" rx="145" ry="17" fill="rgba(16,28,45,0.25)"/>
+      <path d="M 35 345 Q 120 320 200 322 Q 280 324 365 345 Z" fill="${c.primary}" opacity="0.85"/>
+      <path d="M 65 342 Q 135 324 200 326 Q 265 328 335 342 Z" fill="${c.light}" opacity="0.4"/>
+      <ellipse cx="200" cy="332" rx="50" ry="7" fill="rgba(0,0,0,0.3)"/>
+    `;
+  }
+  return `
+    <ellipse cx="200" cy="336" rx="140" ry="16" fill="rgba(0,0,0,0.06)"/>
+    <path d="M 40 345 Q 120 322 200 324 Q 280 326 360 345 Z" fill="${c.pale}" opacity="0.9"/>
+    <path d="M 70 342 Q 135 324 200 326 Q 265 328 330 342 Z" fill="${c.light}" opacity="0.45"/>
+    <ellipse cx="200" cy="332" rx="40" ry="6" fill="rgba(0,0,0,0.12)"/>
+  `;
+}
+
+// BULLETPROOF CLOUD HELPERS WITH TRIPLE FALLBACKS
+function oakFoliageCloud(cx, cy, rx, ry, mainColor, highlightColor) {
+  const main = typeof mainColor === 'object' ? mainColor.primary : (mainColor || '#2F5233');
+  const light = typeof mainColor === 'object' ? (mainColor.light || mainColor.primaryLight || mainColor.primary) : (highlightColor || main);
+  return `<g transform="translate(${cx},${cy})">
+    <ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="${main}"/>
+    <circle cx="-${rx*0.5}" cy="-${ry*0.4}" r="${rx*0.42}" fill="${light}"/>
+    <circle cx="${rx*0.5}" cy="-${ry*0.4}" r="${rx*0.42}" fill="${light}"/>
+    <circle cx="0" cy="-${ry*0.65}" r="${rx*0.48}" fill="${light}"/>
+  </g>`;
+}
+
+function mapleFoliageCloud(cx, cy, rx, ry, mainColor, highlightColor) {
+  const main = typeof mainColor === 'object' ? mainColor.primary : (mainColor || '#8C4A2F');
+  const light = typeof mainColor === 'object' ? (mainColor.light || mainColor.primaryLight || mainColor.primary) : (highlightColor || main);
+  return `<g transform="translate(${cx},${cy})">
+    <ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="${main}"/>
+    <circle cx="-${rx*0.55}" cy="-${ry*0.35}" r="${rx*0.38}" fill="${light}"/>
+    <circle cx="${rx*0.55}" cy="-${ry*0.35}" r="${rx*0.38}" fill="${light}"/>
+    <circle cx="0" cy="-${ry*0.65}" r="${rx*0.45}" fill="${light}"/>
+  </g>`;
+}
+
+function sakuraPetalCloud(cx, cy, rx, ry, mainColor, highlightColor) {
+  const main = typeof mainColor === 'object' ? mainColor.primary : (mainColor || '#B5567A');
+  const light = typeof mainColor === 'object' ? (mainColor.light || mainColor.primaryLight || mainColor.primary) : (highlightColor || main);
+  return `<g transform="translate(${cx},${cy})">
+    <ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="${main}"/>
+    <circle cx="-${rx*0.5}" cy="-${ry*0.4}" r="${rx*0.4}" fill="${light}"/>
+    <circle cx="${rx*0.5}" cy="-${ry*0.4}" r="${rx*0.4}" fill="${light}"/>
+    <circle cx="0" cy="-${ry*0.6}" r="${rx*0.46}" fill="${light}"/>
+  </g>`;
+}
+
+function pineNeedleTier(cx, cy, width, height, mainColor, shadowColor) {
+  const hw = width / 2;
+  return `
+    <g transform="translate(${cx},${cy})">
+      <path d="M 0 -${height*1.05} Q -${hw*0.35} -${height*0.6} -${hw*1.12} 0 Q -${hw*0.65} -${height*0.12} -${hw*0.75} 0 Q -${hw*0.35} -${height*0.15} 0 0 Q ${hw*0.35} -${height*0.15} ${hw*0.75} 0 Q ${hw*0.65} -${height*0.12} ${hw*1.12} 0 Q ${hw*0.35} -${height*0.6} 0 -${height*1.05} Z" fill="${shadowColor}"/>
+      <path d="M 0 -${height} Q -${hw*0.32} -${height*0.55} -${hw} 0 Q -${hw*0.55} -${height*0.2} -${hw*0.68} 0 Q -${hw*0.32} -${height*0.22} 0 -${height*0.08} Q ${hw*0.32} -${height*0.22} ${hw*0.68} 0 Q ${hw*0.55} -${height*0.2} ${hw} 0 Q ${hw*0.32} -${height*0.55} 0 -${height} Z" fill="${mainColor}"/>
+      <path d="M -${hw*0.4} -${height*0.4} Q -${hw*0.7} -${height*0.1} -${hw*0.8} 0 M ${hw*0.4} -${height*0.4} Q ${hw*0.7} -${height*0.1} ${hw*0.8} 0" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </g>
+  `;
+}
+
+function desertAcaciaCloud(cx, cy, rx, ry, mainColor, highlightColor) {
+  const main = typeof mainColor === 'object' ? mainColor.primary : (mainColor || '#C48538');
+  const light = typeof mainColor === 'object' ? (mainColor.light || mainColor.primaryLight || mainColor.primary) : (highlightColor || main);
+  return `<g transform="translate(${cx},${cy})">
+    <ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="${main}"/>
+    <ellipse cx="0" cy="-${ry*0.25}" rx="${rx*0.85}" ry="${ry*0.75}" fill="${light}"/>
+  </g>`;
+}
+
+function willowCurtain(cx, cy, width, height, c) {
+  const count = 12;
+  const startX = cx - width / 2;
+  const step = width / count;
+  let vines = '';
+  for (let i = 0; i <= count; i++) {
+    const vx = startX + i * step;
+    const vh = height * (0.75 + Math.sin(i * 0.8) * 0.28);
+    const color = i % 2 === 0 ? c.primary : c.light;
+    const curveOffset = Math.sin(i * 1.2) * 16;
+    vines += `<path d="M ${vx} ${cy} Q ${vx + curveOffset} ${cy + vh*0.5} ${vx + curveOffset*0.5} ${cy + vh}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.9"/>`;
+    vines += `<circle cx="${vx + curveOffset*0.5}" cy="${cy + vh}" r="2" fill="${c.light}"/>`;
+  }
+  return `
+    <g transform="translate(0,0)">
+      <ellipse cx="${cx}" cy="${cy - height*0.2}" rx="${width*0.52}" ry="${height*0.35}" fill="${c.primary}" opacity="0.85"/>
+      <ellipse cx="${cx}" cy="${cy - height*0.35}" rx="${width*0.42}" ry="${height*0.3}" fill="${c.light}"/>
+      ${vines}
+    </g>
+  `;
+}
+
+function canadaMapleCloud(cx, cy, rx, ry, mainColor, highlightColor) {
+  const main = typeof mainColor === 'object' ? mainColor.primary : (mainColor || '#8B3E27');
+  const light = typeof mainColor === 'object' ? (mainColor.light || mainColor.primaryLight || mainColor.primary) : (highlightColor || main);
+  const accent = typeof mainColor === 'object' ? (mainColor.accent || light) : (highlightColor || light);
+  return `<g transform="translate(${cx},${cy})">
+    <ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="${main}"/>
+    <circle cx="-${rx*0.5}" cy="-${ry*0.4}" r="${rx*0.42}" fill="${light}"/>
+    <circle cx="${rx*0.5}" cy="-${ry*0.4}" r="${rx*0.42}" fill="${light}"/>
+    <circle cx="0" cy="-${ry*0.65}" r="${rx*0.48}" fill="${accent}"/>
+  </g>`;
+}
+
+function birchFoliageCloud(cx, cy, rx, ry, mainColor, highlightColor) {
+  const main = typeof mainColor === 'object' ? mainColor.primary : (mainColor || '#6A7F91');
+  const light = typeof mainColor === 'object' ? (mainColor.light || mainColor.primaryLight || mainColor.primary) : (highlightColor || main);
+  return `<g transform="translate(${cx},${cy})">
+    <ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="${main}"/>
+    <circle cx="-${rx*0.45}" cy="-${ry*0.4}" r="${rx*0.38}" fill="${light}"/>
+    <circle cx="${rx*0.45}" cy="-${ry*0.4}" r="${rx*0.38}" fill="${light}"/>
+    <circle cx="0" cy="-${ry*0.65}" r="${rx*0.42}" fill="${light}"/>
+  </g>`;
+}
+
+function fireflies(c) {
+  return `<g style="animation: fireflyPulse 4s ease-in-out infinite alternate;"><circle cx="130" cy="140" r="3" fill="${c.accentSoft}"/><circle cx="270" cy="130" r="2.5" fill="#fff"/><circle cx="200" cy="80" r="3.5" fill="${c.accentSoft}"/></g>`;
+}
+
+function renderGorgeousBroto(c, cloudFn) {
+  return `
+    <path d="M 200 330 C 196 295, 204 270, 200 230" stroke="${c.trunk}" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M 201 275 C 182 258, 168 250, 155 240 M 199 270 C 218 255, 232 248, 245 240" stroke="${c.trunk}" stroke-width="3" stroke-linecap="round" fill="none"/>
+    ${cloudFn(155, 238, 26, 18, c.primary, c.light)}
+    ${cloudFn(245, 238, 26, 18, c.primary, c.light)}
+    ${cloudFn(200, 218, 38, 28, c.primary, c.light)}
+    <circle cx="200" cy="192" r="3.5" fill="#FFFFFF" opacity="0.9"/>
+  `;
+}
+
+function renderPerfectMuda(c, cloudFn) {
+  return `
+    <path d="M 188 330 Q 198 250 194 200 L 206 200 Q 202 250 212 330 Z" fill="${c.trunk}"/>
+    <path d="M 194 200 Q 165 175 145 155 M 206 200 Q 235 175 255 155 M 200 200 L 200 145" stroke="${c.trunk}" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+    ${cloudFn(145, 155, 44, 32, c.primary, c.light)}
+    ${cloudFn(255, 155, 44, 32, c.primary, c.light)}
+    ${cloudFn(200, 132, 58, 42, c.primary, c.light)}
+  `;
+}
+
+// REDESIGNED MAJESTIC LEVEL 6 (FLOR) CANOPIES MAKING THEM VISUALLY GRAND & DISTINCT FROM LEVEL 5
+const TREE_SPECIES = {
+  carvalho: {
+    semente: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('carv_s', c)}${getGroundBase(c, 'carvalho')}<circle cx="200" cy="320" r="25" fill="url(#carv_s_seed_glow)"/><ellipse cx="200" cy="325" rx="14" ry="10" fill="${c.trunk}"/><path d="M 200 320 Q 198 290 200 270" stroke="${c.light}" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M 200 270 Q 185 255 178 260 C 182 275 195 272 200 270 Z" fill="${c.light}"/><path d="M 200 270 Q 215 255 222 260 C 218 275 205 272 200 270 Z" fill="${c.primary}"/><circle cx="200" cy="264" r="3" fill="#fff"/>${fireflies(c)}</svg>`,
+    broto: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('carv_b', c)}${getGroundBase(c, 'carvalho')}${renderGorgeousBroto(c, oakFoliageCloud)}${fireflies(c)}</svg>`,
+    muda: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('carv_m', c)}${getGroundBase(c, 'carvalho')}${renderPerfectMuda(c, oakFoliageCloud)}${fireflies(c)}</svg>`,
+    jovem: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('carv_j', c)}${getGroundBase(c, 'carvalho')}<path d="M182 330 Q 198 230 193 175 L 207 175 Q 202 230 218 330 Z" fill="${c.trunk}"/><path d="M 194 180 Q 145 150 130 130 M 206 180 Q 255 150 270 130 M 198 175 L 160 105 M 202 175 L 240 105 M 200 175 L 200 95" stroke="${c.trunk}" stroke-width="6.5" stroke-linecap="round" fill="none"/>${oakFoliageCloud(130, 130, 52, 40, c.primary, c.light)}${oakFoliageCloud(270, 130, 52, 40, c.primary, c.light)}${oakFoliageCloud(160, 105, 60, 44, c.primary, c.light)}${oakFoliageCloud(240, 105, 60, 44, c.primary, c.light)}${oakFoliageCloud(200, 80, 72, 52, c.primary, c.light)}${fireflies(c)}</svg>`,
+    madura: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('carv_mad', c)}${getGroundBase(c, 'carvalho')}<path d="M176 330 Q 198 220 191 155 L 209 155 Q 202 220 224 330 Z" fill="${c.trunk}"/><path d="M 192 160 Q 135 135 110 115 M 208 160 Q 265 135 290 115 M 198 155 L 140 80 M 202 155 L 260 80 M 200 155 L 200 70" stroke="${c.trunk}" stroke-width="8" stroke-linecap="round" fill="none"/>${oakFoliageCloud(110, 115, 62, 46, c.primary, c.light)}${oakFoliageCloud(290, 115, 62, 46, c.primary, c.light)}${oakFoliageCloud(140, 80, 70, 52, c.primary, c.light)}${oakFoliageCloud(260, 80, 70, 52, c.primary, c.light)}${oakFoliageCloud(200, 55, 84, 60, c.primary, c.light)}${fireflies(c)}</svg>`,
+    flor: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('carv_f', c)}${getGroundBase(c, 'carvalho')}<circle cx="200" cy="110" r="155" fill="url(#carv_f_crown_glow)"/><path d="M170 330 Q 198 200 186 130 L 214 130 Q 202 200 230 330 Z" fill="${c.trunk}"/><path d="M 190 140 Q 115 120 75 95 M 210 140 Q 285 120 325 95 M 194 135 L 115 55 M 206 135 L 285 55 M 200 130 L 200 45" stroke="${c.trunk}" stroke-width="10" stroke-linecap="round" fill="none"/>${oakFoliageCloud(75, 95, 75, 54, c.primary, c.light)}${oakFoliageCloud(325, 95, 75, 54, c.primary, c.light)}${oakFoliageCloud(115, 55, 82, 60, c.primary, c.light)}${oakFoliageCloud(285, 55, 82, 60, c.primary, c.light)}${oakFoliageCloud(150, 80, 70, 50, c.primary, c.light)}${oakFoliageCloud(250, 80, 70, 50, c.primary, c.light)}${oakFoliageCloud(200, 40, 98, 70, c.primary, c.light)}${renderHabitFruits(c, 'carvalho')}${fireflies(c)}</svg>`
+  },
+  ipe: {
+    semente: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ipe_s', c)}${getGroundBase(c, 'ipe')}<circle cx="200" cy="320" r="28" fill="url(#ipe_s_seed_glow)"/><ellipse cx="200" cy="326" rx="16" ry="9" fill="#7A5230"/><path d="M 200 322 Q 194 285 200 250" stroke="#7A5230" stroke-width="4.5" stroke-linecap="round" fill="none"/><path d="M 200 250 Q 170 230 160 238 C 170 258 190 252 200 250 Z" fill="#FFD700"/><path d="M 200 250 Q 230 230 240 238 C 230 258 210 252 200 250 Z" fill="#FFC107"/><circle cx="200" cy="242" r="3.5" fill="#FFF59D"/>${fireflies(c)}</svg>`,
+    broto: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ipe_b', c)}${getGroundBase(c, 'ipe')}${renderGorgeousBroto(c, oakFoliageCloud)}${fireflies(c)}</svg>`,
+    muda: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ipe_m', c)}${getGroundBase(c, 'ipe')}${renderPerfectMuda(c, oakFoliageCloud)}${fireflies(c)}</svg>`,
+    jovem: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ipe_j', c)}${getGroundBase(c, 'ipe')}<path d="M182 330 Q 198 230 193 175 L 207 175 Q 202 230 218 330 Z" fill="${c.trunk}"/><path d="M 194 180 Q 145 150 130 130 M 206 180 Q 255 150 270 130 M 198 175 L 160 105 M 202 175 L 240 105 M 200 175 L 200 95" stroke="${c.trunk}" stroke-width="6.5" stroke-linecap="round" fill="none"/>${oakFoliageCloud(130, 130, 52, 40, c.primary, c.light)}${oakFoliageCloud(270, 130, 52, 40, c.primary, c.light)}${oakFoliageCloud(160, 105, 60, 44, c.primary, c.light)}${oakFoliageCloud(240, 105, 60, 44, c.primary, c.light)}${oakFoliageCloud(200, 80, 72, 52, c.primary, c.light)}${fireflies(c)}</svg>`,
+    madura: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ipe_mad', c)}${getGroundBase(c, 'ipe')}<path d="M176 330 Q 198 220 191 155 L 209 155 Q 202 220 224 330 Z" fill="${c.trunk}"/><path d="M 192 160 Q 135 135 110 115 M 208 160 Q 265 135 290 115 M 198 155 L 140 80 M 202 155 L 260 80 M 200 155 L 200 70" stroke="${c.trunk}" stroke-width="8" stroke-linecap="round" fill="none"/>${oakFoliageCloud(110, 115, 62, 46, c.primary, c.light)}${oakFoliageCloud(290, 115, 62, 46, c.primary, c.light)}${oakFoliageCloud(140, 80, 70, 52, c.primary, c.light)}${oakFoliageCloud(260, 80, 70, 52, c.primary, c.light)}${oakFoliageCloud(200, 55, 84, 60, c.primary, c.light)}${fireflies(c)}</svg>`,
+    flor: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ipe_f', c)}${getGroundBase(c, 'ipe')}<circle cx="200" cy="110" r="160" fill="url(#ipe_f_crown_glow)"/><path d="M170 330 Q 198 200 186 130 L 214 130 Q 202 200 230 330 Z" fill="${c.trunk}"/><path d="M 190 140 Q 115 120 75 95 M 210 140 Q 285 120 325 95 M 194 135 L 115 55 M 206 135 L 285 55 M 200 130 L 200 45" stroke="${c.trunk}" stroke-width="10" stroke-linecap="round" fill="none"/>${oakFoliageCloud(75, 95, 78, 56, c.primary, c.light)}${oakFoliageCloud(325, 95, 78, 56, c.primary, c.light)}${oakFoliageCloud(115, 55, 84, 62, c.primary, c.light)}${oakFoliageCloud(285, 55, 84, 62, c.primary, c.light)}${oakFoliageCloud(150, 78, 72, 52, c.primary, c.light)}${oakFoliageCloud(250, 78, 72, 52, c.primary, c.light)}${oakFoliageCloud(200, 36, 102, 74, c.primary, c.light)}${renderHabitFruits(c, 'ipe')}<g style="animation: petalDrift 5s linear infinite;"><circle cx="130" cy="110" r="4.5" fill="#FFD700"/><circle cx="210" cy="40" r="5" fill="#FFC107"/><circle cx="270" cy="90" r="4" fill="#FFE082"/></g>${fireflies(c)}</svg>`
+  },
+  bordo: {
+    semente: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bordo_s', c)}${getGroundBase(c, 'bordo')}<circle cx="200" cy="320" r="25" fill="url(#bordo_s_seed_glow)"/><ellipse cx="200" cy="325" rx="14" ry="10" fill="${c.trunk}"/><path d="M 200 320 Q 198 290 200 270" stroke="${c.accent}" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M 200 270 Q 185 255 178 260 C 182 275 195 272 200 270 Z" fill="${c.accentSoft}"/><path d="M 200 270 Q 215 255 222 260 C 218 275 205 272 200 270 Z" fill="${c.primary}"/><circle cx="200" cy="264" r="3" fill="#fff"/>${fireflies(c)}</svg>`,
+    broto: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bordo_b', c)}${getGroundBase(c, 'bordo')}${renderGorgeousBroto(c, mapleFoliageCloud)}${fireflies(c)}</svg>`,
+    muda: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bordo_m', c)}${getGroundBase(c, 'bordo')}${renderPerfectMuda(c, mapleFoliageCloud)}${fireflies(c)}</svg>`,
+    jovem: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bordo_j', c)}${getGroundBase(c, 'bordo')}<path d="M182 330 Q 198 230 193 175 L 207 175 Q 202 230 218 330 Z" fill="${c.trunk}"/><path d="M 194 180 Q 145 150 130 130 M 206 180 Q 255 150 270 130 M 198 175 L 160 105 M 202 175 L 240 105 M 200 175 L 200 95" stroke="${c.trunk}" stroke-width="6.5" stroke-linecap="round" fill="none"/>${mapleFoliageCloud(130, 130, 52, 40, c.primary, c.light)}${mapleFoliageCloud(270, 130, 52, 40, c.primary, c.light)}${mapleFoliageCloud(160, 105, 60, 44, c.primary, c.light)}${mapleFoliageCloud(240, 105, 60, 44, c.primary, c.light)}${mapleFoliageCloud(200, 80, 72, 52, c.primary, c.light)}${fireflies(c)}</svg>`,
+    madura: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bordo_mad', c)}${getGroundBase(c, 'bordo')}<path d="M176 330 Q 198 220 191 155 L 209 155 Q 202 220 224 330 Z" fill="${c.trunk}"/><path d="M 192 160 Q 135 135 110 115 M 208 160 Q 265 135 290 115 M 198 155 L 140 80 M 202 155 L 260 80 M 200 155 L 200 70" stroke="${c.trunk}" stroke-width="8" stroke-linecap="round" fill="none"/>${mapleFoliageCloud(110, 115, 62, 46, c.primary, c.light)}${mapleFoliageCloud(290, 115, 62, 46, c.primary, c.light)}${mapleFoliageCloud(140, 80, 70, 52, c.primary, c.light)}${mapleFoliageCloud(260, 80, 70, 52, c.primary, c.light)}${mapleFoliageCloud(200, 55, 84, 60, c.primary, c.light)}${fireflies(c)}</svg>`,
+    flor: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bordo_f', c)}${getGroundBase(c, 'bordo')}<circle cx="200" cy="110" r="155" fill="url(#bordo_f_crown_glow)"/><path d="M170 330 Q 198 200 186 130 L 214 130 Q 202 200 230 330 Z" fill="${c.trunk}"/><path d="M 190 140 Q 115 120 75 95 M 210 140 Q 285 120 325 95 M 194 135 L 115 55 M 206 135 L 285 55 M 200 130 L 200 45" stroke="${c.trunk}" stroke-width="10" stroke-linecap="round" fill="none"/>${mapleFoliageCloud(75, 95, 75, 54, c.primary, c.light)}${mapleFoliageCloud(325, 95, 75, 54, c.primary, c.light)}${mapleFoliageCloud(115, 55, 82, 60, c.primary, c.light)}${mapleFoliageCloud(285, 55, 82, 60, c.primary, c.light)}${mapleFoliageCloud(150, 80, 70, 50, c.primary, c.light)}${mapleFoliageCloud(250, 80, 70, 50, c.primary, c.light)}${mapleFoliageCloud(200, 40, 98, 70, c.primary, c.light)}${renderHabitFruits(c, 'bordo')}${fireflies(c)}</svg>`
+  },
+  pinheiro: {
+    semente: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('pin_s', c)}${getGroundBase(c, 'pinheiro')}<circle cx="200" cy="320" r="25" fill="url(#pin_s_seed_glow)"/><ellipse cx="200" cy="325" rx="12" ry="8" fill="${c.trunk}"/><path d="M 200 320 L 200 280" stroke="${c.primary}" stroke-width="4" stroke-linecap="round" fill="none"/>${pineNeedleTier(200, 280, 42, 32, c.primary, c.trunk)}<circle cx="200" cy="245" r="3.5" fill="#fff"/>${fireflies(c)}</svg>`,
+    broto: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('pin_b', c)}${getGroundBase(c, 'pinheiro')}<path d="M 191 330 L 194 240 L 206 240 L 209 330 Z" fill="${c.trunk}"/>${pineNeedleTier(200, 240, 85, 68, c.primary, c.trunk)}${pineNeedleTier(200, 190, 60, 54, c.light, c.primary)}${fireflies(c)}</svg>`,
+    muda: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('pin_m', c)}${getGroundBase(c, 'pinheiro')}<path d="M 188 330 Q 198 260 193 190 L 207 190 Q 202 260 212 330 Z" fill="${c.trunk}"/>${pineNeedleTier(200, 220, 120, 88, c.primary, c.trunk)}${pineNeedleTier(200, 170, 98, 72, c.light, c.primary)}${pineNeedleTier(200, 125, 75, 56, c.primary, c.light)}${fireflies(c)}</svg>`,
+    jovem: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('pin_j', c)}${getGroundBase(c, 'pinheiro')}<path d="M 184 330 Q 198 240 191 160 L 209 160 Q 202 240 216 330 Z" fill="${c.trunk}"/><path d="M 196 200 L 140 180 M 204 200 L 260 180" stroke="${c.trunk}" stroke-width="4.5" fill="none"/>${pineNeedleTier(200, 210, 148, 98, c.primary, c.trunk)}${pineNeedleTier(200, 155, 124, 80, c.light, c.primary)}${pineNeedleTier(200, 110, 100, 64, c.primary, c.light)}${pineNeedleTier(200, 72, 78, 50, c.light, c.primary)}${fireflies(c)}</svg>`,
+    madura: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('pin_mad', c)}${getGroundBase(c, 'pinheiro')}<path d="M 180 330 Q 198 230 189 135 L 211 135 Q 202 230 220 330 Z" fill="${c.trunk}"/><path d="M 194 185 L 125 160 M 206 185 L 275 160" stroke="${c.trunk}" stroke-width="5.5" fill="none"/>${pineNeedleTier(200, 195, 172, 110, c.primary, c.trunk)}${pineNeedleTier(200, 145, 148, 90, c.light, c.primary)}${pineNeedleTier(200, 102, 122, 74, c.primary, c.light)}${pineNeedleTier(200, 65, 96, 56, c.light, c.primary)}${fireflies(c)}</svg>`,
+    flor: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('pin_f', c)}${getGroundBase(c, 'pinheiro')}<circle cx="200" cy="115" r="145" fill="url(#pin_f_crown_glow)"/><path d="M 176 330 Q 198 220 186 115 L 214 115 Q 202 220 224 330 Z" fill="${c.trunk}"/><path d="M 192 170 L 110 145 M 208 170 L 290 145 M 196 130 L 140 110 M 204 130 L 260 110" stroke="${c.trunk}" stroke-width="6" stroke-linecap="round" fill="none"/>${pineNeedleTier(200, 190, 190, 118, c.primary, c.trunk)}${pineNeedleTier(200, 138, 160, 94, c.light, c.primary)}${pineNeedleTier(200, 95, 132, 78, c.primary, c.light)}${pineNeedleTier(200, 58, 108, 60, c.light, c.primary)}${renderHabitFruits(c, 'pinheiro')}<g transform="translate(200, 22)"><circle cx="0" cy="0" r="18" fill="rgba(255,255,255,0.3)"/><polygon points="0,-16 5,-5 16,-5 7,2 11,14 0,7 -11,14 -7,2 -16,-5 -5,-5" fill="#FFFFFF" filter="drop-shadow(0 0 8px #FFF)"/></g>${fireflies(c)}</svg>`
+  },
+  costeira: {
+    semente: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cost_s', c)}${getGroundBase(c, 'costeira')}<circle cx="200" cy="320" r="25" fill="url(#cost_s_seed_glow)"/><path d="M200 325 Q205 295, 200 265" stroke="${c.trunk}" stroke-width="4.5" stroke-linecap="round" fill="none"/>${willowCurtain(200, 265, 60, 45, c)}${fireflies(c)}</svg>`,
+    broto: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cost_b', c)}${getGroundBase(c, 'costeira')}<path d="M 190 330 Q 210 260 200 210 L 208 210 Q 200 260 212 330 Z" fill="${c.trunk}"/>${willowCurtain(200, 200, 130, 95, c)}${fireflies(c)}</svg>`,
+    muda: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cost_m', c)}${getGroundBase(c, 'costeira')}<path d="M 188 330 Q 208 250 194 195 L 206 195 Q 200 250 212 330 Z" fill="${c.trunk}"/><path d="M 196 195 Q 150 165 135 140 M 204 195 Q 250 165 265 140 M 200 195 L 200 125" stroke="${c.trunk}" stroke-width="5.5" stroke-linecap="round" fill="none"/>${willowCurtain(135, 140, 90, 80, c)}${willowCurtain(265, 140, 90, 80, c)}${willowCurtain(200, 125, 140, 105, c)}${fireflies(c)}</svg>`,
+    jovem: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cost_j', c)}${getGroundBase(c, 'costeira')}<path d="M 184 330 Q 210 240 193 170 L 207 170 Q 200 240 218 330 Z" fill="${c.trunk}"/><path d="M 194 170 Q 140 145 120 120 M 206 170 Q 260 145 280 120 M 200 170 L 200 95" stroke="${c.trunk}" stroke-width="7" stroke-linecap="round" fill="none"/>${willowCurtain(120, 120, 110, 95, c)}${willowCurtain(280, 120, 110, 95, c)}${willowCurtain(200, 95, 170, 125, c)}${fireflies(c)}</svg>`,
+    madura: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cost_mad', c)}${getGroundBase(c, 'costeira')}<path d="M 178 330 Q 212 230 191 150 L 209 150 Q 200 230 224 330 Z" fill="${c.trunk}"/><path d="M 192 150 Q 130 130 100 100 M 208 150 Q 270 130 300 100 M 200 150 L 200 75" stroke="${c.trunk}" stroke-width="8.5" stroke-linecap="round" fill="none"/>${willowCurtain(100, 100, 130, 110, c)}${willowCurtain(300, 100, 130, 110, c)}${willowCurtain(200, 75, 200, 150, c)}${fireflies(c)}</svg>`,
+    flor: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cost_f', c)}${getGroundBase(c, 'costeira')}<circle cx="200" cy="130" r="140" fill="url(#cost_f_crown_glow)"/><path d="M 174 330 Q 214 220 189 140 L 211 140 Q 200 220 226 330 Z" fill="${c.trunk}"/><path d="M 190 140 Q 120 120 90 90 M 212 140 Q 280 120 310 90 M 200 140 L 200 65" stroke="${c.trunk}" stroke-width="9.5" stroke-linecap="round" fill="none"/>${willowCurtain(90, 90, 145, 125, c)}${willowCurtain(310, 90, 145, 125, c)}${willowCurtain(200, 65, 230, 170, c)}${renderHabitFruits(c, 'costeira')}${fireflies(c)}</svg>`
+  },
+  cerejeira: {
+    semente: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cer_s', c)}${getGroundBase(c, 'cerejeira')}<circle cx="200" cy="320" r="25" fill="url(#cer_s_seed_glow)"/><ellipse cx="200" cy="325" rx="14" ry="10" fill="${c.trunk}"/><path d="M 200 320 Q 198 290 200 270" stroke="${c.accentSoft}" stroke-width="4" stroke-linecap="round" fill="none"/><g transform="translate(200, 265)"><circle cx="0" cy="0" r="12" fill="${c.accentSoft}"/><circle cx="0" cy="0" r="4" fill="#fff"/></g>${fireflies(c)}</svg>`,
+    broto: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cer_b', c)}${getGroundBase(c, 'cerejeira')}${renderGorgeousBroto(c, sakuraPetalCloud)}${fireflies(c)}</svg>`,
+    muda: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cer_m', c)}${getGroundBase(c, 'cerejeira')}${renderPerfectMuda(c, sakuraPetalCloud)}${fireflies(c)}</svg>`,
+    jovem: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cer_j', c)}${getGroundBase(c, 'cerejeira')}<path d="M182 330 Q 198 230 193 175 L 207 175 Q 202 230 218 330 Z" fill="${c.trunk}"/><path d="M 194 180 Q 145 150 130 130 M 206 180 Q 255 150 270 130 M 198 175 L 160 105 M 202 175 L 240 105 M 200 175 L 200 95" stroke="${c.trunk}" stroke-width="6.5" stroke-linecap="round" fill="none"/>${sakuraPetalCloud(130, 130, 52, 40, c.primary, c.light)}${sakuraPetalCloud(270, 130, 52, 40, c.primary, c.light)}${sakuraPetalCloud(160, 105, 60, 44, c.primary, c.light)}${sakuraPetalCloud(240, 105, 60, 44, c.primary, c.light)}${sakuraPetalCloud(200, 80, 72, 52, c.primary, c.light)}${fireflies(c)}</svg>`,
+    madura: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cer_mad', c)}${getGroundBase(c, 'cerejeira')}<path d="M176 330 Q 198 220 191 155 L 209 155 Q 202 220 224 330 Z" fill="${c.trunk}"/><path d="M 192 160 Q 135 135 110 115 M 208 160 Q 265 135 290 115 M 198 155 L 140 80 M 202 155 L 260 80 M 200 155 L 200 70" stroke="${c.trunk}" stroke-width="8" stroke-linecap="round" fill="none"/>${sakuraPetalCloud(110, 115, 62, 46, c.primary, c.light)}${sakuraPetalCloud(290, 115, 62, 46, c.primary, c.light)}${sakuraPetalCloud(140, 80, 70, 52, c.primary, c.light)}${sakuraPetalCloud(260, 80, 70, 52, c.primary, c.light)}${sakuraPetalCloud(200, 55, 84, 60, c.primary, c.light)}${fireflies(c)}</svg>`,
+    flor: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('cer_f', c)}${getGroundBase(c, 'cerejeira')}<circle cx="200" cy="110" r="160" fill="url(#cer_f_crown_glow)"/><path d="M170 330 Q 198 200 186 130 L 214 130 Q 202 200 230 330 Z" fill="${c.trunk}"/><path d="M 190 140 Q 115 120 75 95 M 210 140 Q 285 120 325 95 M 194 135 L 115 55 M 206 135 L 285 55 M 200 130 L 200 45" stroke="${c.trunk}" stroke-width="10" stroke-linecap="round" fill="none"/>${sakuraPetalCloud(75, 95, 78, 56, c.primary, c.light)}${sakuraPetalCloud(325, 95, 78, 56, c.primary, c.light)}${sakuraPetalCloud(115, 55, 84, 62, c.primary, c.light)}${sakuraPetalCloud(285, 55, 84, 62, c.primary, c.light)}${sakuraPetalCloud(150, 78, 72, 52, c.primary, c.light)}${sakuraPetalCloud(250, 78, 72, 52, c.primary, c.light)}${sakuraPetalCloud(200, 36, 102, 74, c.primary, c.light)}${renderHabitFruits(c, 'cerejeira')}<g style="animation: petalDrift 6s linear infinite;"><circle cx="120" cy="120" r="4.5" fill="#fff"/><circle cx="200" cy="30" r="5" fill="#fff"/><circle cx="270" cy="80" r="4" fill="#FFC107"/></g>${fireflies(c)}</svg>`
+  },
+  acacia: {
+    semente: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ac_s', c)}${getGroundBase(c, 'acacia')}<circle cx="200" cy="320" r="28" fill="url(#ac_s_seed_glow)"/><ellipse cx="200" cy="326" rx="16" ry="9" fill="#9C6D3E"/><path d="M 200 322 Q 194 285 200 250" stroke="#C48538" stroke-width="4.5" stroke-linecap="round" fill="none"/><path d="M 200 250 Q 170 230 160 238 C 170 258 190 252 200 250 Z" fill="#E4B675"/><path d="M 200 250 Q 230 230 240 238 C 230 258 210 252 200 250 Z" fill="#D79B4A"/><circle cx="200" cy="242" r="3.5" fill="#FFF59D"/>${fireflies(c)}</svg>`,
+    broto: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ac_b', c)}${getGroundBase(c, 'acacia')}<path d="M 197 330 C 192 290, 206 265, 200 225" stroke="#9C6D3E" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M 201 270 C 178 250, 160 242, 145 230 M 199 265 C 222 248, 240 240, 255 230" stroke="#9C6D3E" stroke-width="3" stroke-linecap="round" fill="none"/>${desertAcaciaCloud(145, 230, 28, 16, c)}${desertAcaciaCloud(255, 230, 28, 16, c)}${desertAcaciaCloud(200, 210, 42, 24, c)}<circle cx="200" cy="188" r="3.5" fill="#FFF59D"/>${fireflies(c)}</svg>`,
+    muda: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ac_m', c)}${getGroundBase(c, 'acacia')}${renderPerfectMuda(c, desertAcaciaCloud)}${fireflies(c)}</svg>`,
+    jovem: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ac_j', c)}${getGroundBase(c, 'acacia')}<path d="M 178 330 Q 200 250 193 190 L 207 190 Q 200 250 222 330 Z" fill="${c.trunk}"/><path d="M 194 190 Q 155 165 140 145 M 206 190 Q 245 165 260 145 M 200 190 L 200 135" stroke="${c.trunk}" stroke-width="7" stroke-linecap="round" fill="none"/>${desertAcaciaCloud(140, 145, 62, 40, c)}${desertAcaciaCloud(260, 145, 62, 40, c)}${desertAcaciaCloud(200, 135, 55, 36, c)}${fireflies(c)}</svg>`,
+    madura: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ac_mad', c)}${getGroundBase(c, 'acacia')}<path d="M 174 330 Q 200 240 191 175 L 209 175 Q 200 240 226 330 Z" fill="${c.trunk}"/><path d="M 192 175 Q 140 145 120 130 M 208 175 Q 260 145 280 130 M 200 175 L 200 115" stroke="${c.trunk}" stroke-width="8.5" stroke-linecap="round" fill="none"/>${desertAcaciaCloud(120, 130, 75, 48, c)}${desertAcaciaCloud(280, 130, 75, 48, c)}${desertAcaciaCloud(200, 115, 68, 44, c)}${fireflies(c)}</svg>`,
+    flor: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('ac_f', c)}${getGroundBase(c, 'acacia')}<circle cx="200" cy="115" r="160" fill="url(#ac_f_crown_glow)"/><path d="M 168 330 Q 200 210 186 140 L 214 140 Q 200 210 232 330 Z" fill="${c.trunk}"/><path d="M 188 145 Q 115 125 70 100 M 212 145 Q 285 125 330 100 M 196 140 L 115 65 M 204 140 L 285 65 M 200 135 L 200 60" stroke="${c.trunk}" stroke-width="11" stroke-linecap="round" fill="none"/>${desertAcaciaCloud(70, 100, 95, 56, c)}${desertAcaciaCloud(330, 100, 95, 56, c)}${desertAcaciaCloud(115, 65, 90, 52, c)}${desertAcaciaCloud(285, 65, 90, 52, c)}${desertAcaciaCloud(200, 60, 85, 48, c)}${renderHabitFruits(c, 'acacia')}${fireflies(c)}</svg>`
+  },
+  sequoia: {
+    semente: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('seq_s', c)}${getGroundBase(c, 'sequoia')}<circle cx="200" cy="320" r="28" fill="url(#seq_s_seed_glow)"/><path d="M 188 332 C 188 318 212 318 212 332 Z" fill="#7F4B35"/><path d="M 200 322 L 200 252" stroke="#8B3E27" stroke-width="5" stroke-linecap="round" fill="none"/><g transform="translate(200, 252)"><path d="M 0 0 C -16 -12 -18 -25 0 -30 C 18 -25 16 -12 0 0 Z" fill="#BC5A37"/><path d="M -12 -5 C -25 -18 -22 -32 -5 -32 Z" fill="#C8775B"/><path d="M 12 -5 C 25 -18 22 -32 5 -32 Z" fill="#E0A085"/><circle cx="0" cy="-28" r="3.5" fill="#FFF"/></g>${fireflies(c)}</svg>`,
+    broto: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('seq_b', c)}${getGroundBase(c, 'sequoia')}<path d="M 197 330 C 193 290, 205 265, 200 225" stroke="#7F4B35" stroke-width="5.5" stroke-linecap="round" fill="none"/><path d="M 201 270 C 178 250, 162 242, 148 230 M 199 265 C 222 248, 238 240, 252 230" stroke="#7F4B35" stroke-width="3" stroke-linecap="round" fill="none"/>${canadaMapleCloud(148, 230, 28, 18, c)}${canadaMapleCloud(252, 230, 28, 18, c)}${canadaMapleCloud(200, 210, 42, 28, c)}<circle cx="200" cy="185" r="3.5" fill="#FFF"/>${fireflies(c)}</svg>`,
+    muda: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('seq_m', c)}${getGroundBase(c, 'sequoia')}${renderPerfectMuda(c, canadaMapleCloud)}${fireflies(c)}</svg>`,
+    jovem: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('seq_j', c)}${getGroundBase(c, 'sequoia')}<path d="M182 330 Q 198 230 193 175 L 207 175 Q 202 230 218 330 Z" fill="${c.trunk}"/><path d="M 194 180 Q 145 150 130 130 M 206 180 Q 255 150 270 130 M 198 175 L 160 105 M 202 175 L 240 105 M 200 175 L 200 95" stroke="${c.trunk}" stroke-width="6.5" stroke-linecap="round" fill="none"/>${canadaMapleCloud(130, 130, 56, 42, c)}${canadaMapleCloud(270, 130, 56, 42, c)}${canadaMapleCloud(160, 105, 66, 50, c)}${canadaMapleCloud(240, 105, 66, 50, c)}${canadaMapleCloud(200, 80, 78, 58, c)}${fireflies(c)}</svg>`,
+    madura: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('seq_mad', c)}${getGroundBase(c, 'sequoia')}<path d="M176 330 Q 198 220 191 155 L 209 155 Q 202 220 224 330 Z" fill="${c.trunk}"/><path d="M 192 160 Q 135 135 110 115 M 208 160 Q 265 135 290 115 M 198 155 L 140 80 M 202 155 L 260 80 M 200 155 L 200 70" stroke="${c.trunk}" stroke-width="8" stroke-linecap="round" fill="none"/>${canadaMapleCloud(110, 115, 66, 48, c)}${canadaMapleCloud(290, 115, 66, 48, c)}${canadaMapleCloud(140, 80, 78, 56, c)}${canadaMapleCloud(260, 80, 78, 56, c)}${canadaMapleCloud(200, 55, 90, 66, c)}${fireflies(c)}</svg>`,
+    flor: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('seq_f', c)}${getGroundBase(c, 'sequoia')}<circle cx="200" cy="110" r="155" fill="url(#seq_f_crown_glow)"/><path d="M170 330 Q 198 200 186 130 L 214 130 Q 202 200 230 330 Z" fill="${c.trunk}"/><path d="M 190 140 Q 115 120 75 95 M 210 140 Q 285 120 325 95 M 194 135 L 115 55 M 206 135 L 285 55 M 200 130 L 200 45" stroke="${c.trunk}" stroke-width="10" stroke-linecap="round" fill="none"/>${canadaMapleCloud(75, 95, 78, 56, c)}${canadaMapleCloud(325, 95, 78, 56, c)}${canadaMapleCloud(115, 55, 86, 62, c)}${canadaMapleCloud(285, 55, 86, 62, c)}${canadaMapleCloud(150, 78, 72, 52, c)}${canadaMapleCloud(250, 78, 72, 52, c)}${canadaMapleCloud(200, 36, 102, 74, c)}${renderHabitFruits(c, 'sequoia')}<g style="animation: petalDrift 6s linear infinite;"><circle cx="120" cy="120" r="4.5" fill="${c.accent}"/><circle cx="200" cy="30" r="5" fill="${c.accent}"/></g>${fireflies(c)}</svg>`
+  },
+  betula: {
+    semente: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bet_s', c)}${getGroundBase(c, 'betula')}<circle cx="200" cy="320" r="28" fill="url(#bet_s_seed_glow)"/><ellipse cx="200" cy="326" rx="16" ry="9" fill="#5F6B79"/><path d="M 200 322 Q 195 285 200 252" stroke="#EAEAEA" stroke-width="4.5" stroke-linecap="round" fill="none"/><g transform="translate(200, 252)"><path d="M 0 0 Q -18 -18 -22 -4 C -20 12 0 0 0 0 Z" fill="#6A7F91"/><path d="M 0 0 Q 18 -18 22 -4 C 20 12 0 0 0 0 Z" fill="#94A8BF"/><circle cx="0" cy="-12" r="3" fill="#EAEAEA"/></g>${fireflies(c)}</svg>`,
+    broto: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bet_b', c)}${getGroundBase(c, 'betula')}<path d="M 200 330 C 195 290, 204 265, 200 225" stroke="#EAEAEA" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M 197 285 L 203 285 M 196 255 L 204 255" stroke="#5F6B79" stroke-width="2" stroke-linecap="round"/><path d="M 201 270 C 180 250, 162 242, 148 230 M 199 265 C 220 248, 238 240, 252 230" stroke="#EAEAEA" stroke-width="3" stroke-linecap="round" fill="none"/>${birchFoliageCloud(148, 230, 28, 18, c.primary, c.light)}${birchFoliageCloud(252, 230, 28, 18, c.primary, c.light)}${birchFoliageCloud(200, 210, 42, 28, c.primary, c.light)}<circle cx="200" cy="185" r="3.5" fill="#FFF"/>${fireflies(c)}</svg>`,
+    muda: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bet_m', c)}${getGroundBase(c, 'betula')}${renderPerfectMuda(c, birchFoliageCloud)}${fireflies(c)}</svg>`,
+    jovem: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bet_j', c)}${getGroundBase(c, 'betula')}<path d="M192 330 Q206 260 200 160" stroke="#EAEAEA" stroke-width="9" fill="none"/><path d="M200 210 L150 165 M200 185 L250 140" stroke="#EAEAEA" stroke-width="4.5" stroke-linecap="round" fill="none"/>${birchFoliageCloud(150, 160, 58, 44, c.primary, c.light)}${birchFoliageCloud(250, 135, 58, 44, c.primary, c.light)}${birchFoliageCloud(200, 105, 75, 56, c.primary, c.light)}${fireflies(c)}</svg>`,
+    madura: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bet_mad', c)}${getGroundBase(c, 'betula')}<path d="M190 330 Q208 250 200 135" stroke="#EAEAEA" stroke-width="11" fill="none"/><path d="M200 190 L130 140 M200 160 L270 115" stroke="#EAEAEA" stroke-width="5.5" stroke-linecap="round" fill="none"/>${birchFoliageCloud(130, 135, 68, 52, c.primary, c.light)}${birchFoliageCloud(270, 110, 68, 52, c.primary, c.light)}${birchFoliageCloud(200, 80, 88, 66, c.primary, c.light)}${fireflies(c)}</svg>`,
+    flor: (c) => `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">${getDefs('bet_f', c)}${getGroundBase(c, 'betula')}<circle cx="200" cy="130" r="140" fill="url(#bet_f_crown_glow)"/><path d="M188 330 Q210 240 200 115" stroke="#EAEAEA" stroke-width="13" fill="none"/><path d="M200 175 L115 120 M200 140 L285 95" stroke="#EAEAEA" stroke-width="6.5" stroke-linecap="round" fill="none"/>${birchFoliageCloud(115, 115, 78, 60, c.primary, c.light)}${birchFoliageCloud(285, 90, 78, 60, c.primary, c.light)}${birchFoliageCloud(200, 60, 100, 76, c.primary, c.light)}${renderHabitFruits(c, 'betula')}${fireflies(c)}</svg>`
+  }
+};
+
+const THEME_SPECIES = {
+  padrao: 'carvalho', outono: 'bordo', noturno: 'pinheiro', oceano: 'costeira',
+  primavera: 'ipe', amanhecer: 'cerejeira', crepusculo: 'bordo', nevoa: 'betula',
+  deserto: 'acacia', japao: 'cerejeira', canada: 'sequoia', europa: 'carvalho'
+};
+
+function svgArvore(estagioKey, themeKey = 'padrao') {
+  const t = THEMES[themeKey] || THEMES.padrao;
+  const especie = THEME_SPECIES[themeKey] || 'carvalho';
+  const cores = {
+    trunk: t.cores.trunk || '#7A5230',
+    primary: t.cores.primary,
+    light: t.cores.primaryLight,
+    primaryLight: t.cores.primaryLight,
+    pale: t.cores.primaryPale,
+    primaryPale: t.cores.primaryPale,
+    accent: t.cores.accent,
+    accentSoft: t.cores.accentSoft,
+    line: t.cores.line
+  };
+  const especieTrees = TREE_SPECIES[especie] || TREE_SPECIES.carvalho;
+  const fn = especieTrees[estagioKey] || especieTrees.semente;
+  return fn(cores);
+}
+
+function wrapTreeSvg(svgHtml) {
+  return `<div style="display:flex;justify-content:center;align-items:flex-end;width:100%;height:100%;min-height:380px;overflow:hidden;">
+      ${svgHtml.replace('<svg ', '<svg style="width:100%;height:auto;max-height:100%;display:block;margin:0 auto;" ')}
+    </div>`;
+}
+
+const THEMES = {
+  padrao:    { nome: 'Floresta', requisito: null, cores: { bg:'#EFF3EA', bgCard:'#FBFCF9', primary:'#2F5233', primaryLight:'#6B9071', primaryPale:'#DCE8DA', accent:'#C97F4F', accentSoft:'#F0C9A0', accentPale:'#FBE9D6', ink:'#223327', inkSoft:'#5C6B5E', inkFaint:'#8A978B', line:'#DCE3D6', trunk:'#7A5230' }, sceneBgStart:'#EFF3EA', sceneBgEnd:'#DCE8DA', treeBgStart:'#F4F8F2', treeBgEnd:'#E5EEE3' },
+  amanhecer: { nome: 'Cerejeira do Amanhecer', requisito: { tipo:'streak', valor:3, desc:'streak de 3 dias' }, cores: { bg:'#FFF4E8', bgCard:'#FFF8F2', primary:'#D67B4D', primaryLight:'#FFB57B', primaryPale:'#FFE6C9', accent:'#E88F5D', accentSoft:'#F5D2B3', accentPale:'#FFF2E5', ink:'#4B2D1F', inkSoft:'#84614A', inkFaint:'#B08E79', line:'#E8D4CA', trunk:'#8B572E' }, sceneBgStart:'#FFF1DC', sceneBgEnd:'#FFE2B5', treeBgStart:'#FFE8C8', treeBgEnd:'#FFD7A5' },
+  outono:    { nome: 'Outono',   requisito: { tipo:'streak', valor:7, desc:'streak de 7 dias' },  cores: { bg:'#F5EDE3', bgCard:'#FFFDF9', primary:'#8C4A2F', primaryLight:'#C97F4F', primaryPale:'#F0D9C0', accent:'#D9A441', accentSoft:'#F0DFAE', accentPale:'#FBF0D9', ink:'#3A2417', inkSoft:'#7A5A45', inkFaint:'#A98B72', line:'#E8D7C3', trunk:'#8B552D' }, sceneBgStart:'#F7E7D2', sceneBgEnd:'#F1D4B8', treeBgStart:'#F5E7D2', treeBgEnd:'#F0D5B8' },
+  primavera: { nome: 'Primavera', requisito: { tipo:'frutos', valor:1, desc:'1 mês com frutos' }, cores: { bg:'#FFFDF0', bgCard:'#FFFFFA', primary:'#D4A017', primaryLight:'#FFD700', primaryPale:'#FFF8C5', accent:'#E6B800', accentSoft:'#FFE885', accentPale:'#FFFDE6', ink:'#3D2E0A', inkSoft:'#7A601E', inkFaint:'#B39645', line:'#F5EAA8', trunk:'#6E4A23' }, sceneBgStart:'#FFFDE6', sceneBgEnd:'#FFF3B0', treeBgStart:'#FFFDE6', treeBgEnd:'#FFE885' },
+  oceano:    { nome: 'Oceano',   requisito: { tipo:'streak', valor:14, desc:'streak de 14 dias' }, cores: { bg:'#EAF3F3', bgCard:'#FBFFFF', primary:'#2A6F77', primaryLight:'#5FA8AC', primaryPale:'#D6EEEE', accent:'#E08E45', accentSoft:'#F3CDA0', accentPale:'#FBEBD8', ink:'#17323A', inkSoft:'#4C6E74', inkFaint:'#89A6AA', line:'#D3E7E7', trunk:'#42605E' }, sceneBgStart:'#DFF4F6', sceneBgEnd:'#B7E1E4', treeBgStart:'#CEE9E9', treeBgEnd:'#B7DEDE' },
+  crepusculo:{ nome: 'Crepúsculo', requisito: { tipo:'frutos', valor:2, desc:'2 meses com frutos' }, cores: { bg:'#F0E5FF', bgCard:'#FBF6FF', primary:'#6B4AA3', primaryLight:'#8E77D4', primaryPale:'#D8CBF8', accent:'#DA92FF', accentSoft:'#E7D5FF', accentPale:'#F5EEFF', ink:'#2D1A47', inkSoft:'#69538A', inkFaint:'#A08BB8', line:'#D8CFE6', trunk:'#5B3F78' }, sceneBgStart:'#E8DAFF', sceneBgEnd:'#C9B8F0', treeBgStart:'#B49DFF', treeBgEnd:'#6950C4' },
+  noturno:   { nome: 'Noite',    requisito: { tipo:'streak', valor:21, desc:'streak de 21 dias' }, cores: { bg:'#1E2430', bgCard:'#262E3D', primary:'#538C82', primaryLight:'#85BDB4', primaryPale:'#2E3B45', accent:'#E0A860', accentSoft:'#4A4636', accentPale:'#33302A', ink:'#EAEFF2', inkSoft:'#B7C2CC', inkFaint:'#7C8A96', line:'#333E4C', trunk:'#4A3A2F' }, sceneBgStart:'#1F2A3E', sceneBgEnd:'#101827', treeBgStart:'#2A3952', treeBgEnd:'#121927' },
+  japao:     { nome: 'Japão',    requisito: { tipo:'frutos', valor:3, desc:'3 meses com frutos' }, cores: { bg:'#F7E8F2', bgCard:'#FFF1FB', primary:'#9E4B83', primaryLight:'#D18EC0', primaryPale:'#F2D9F0', accent:'#E07EBF', accentSoft:'#F5D1E8', accentPale:'#F8E7F4', ink:'#3C1F3A', inkSoft:'#83607F', inkFaint:'#B99EB8', line:'#E9D9E6', trunk:'#7A4562' }, sceneBgStart:'#F9D9F1', sceneBgEnd:'#E6B6DF', treeBgStart:'#F8D4F0', treeBgEnd:'#E3BEE4' },
+  deserto:   { nome: 'Deserto',  requisito: { tipo:'streak', valor:30, desc:'streak de 30 dias' }, cores: { bg:'#FFF2D9', bgCard:'#FFF8E9', primary:'#C48538', primaryLight:'#E4B675', primaryPale:'#F5DEB5', accent:'#D79B4A', accentSoft:'#F2D0A6', accentPale:'#F7E8CF', ink:'#4A3218', inkSoft:'#836446', inkFaint:'#B69C84', line:'#E9D7C3', trunk:'#9C6D3E' }, sceneBgStart:'#FFF3D8', sceneBgEnd:'#F3D39B', treeBgStart:'#F9E2B0', treeBgEnd:'#E6C48C' },
+  canada:    { nome: 'Canadá',   requisito: { tipo:'frutos', valor:5, desc:'5 meses com frutos' }, cores: { bg:'#F0ECE9', bgCard:'#FEF7F5', primary:'#8B3E27', primaryLight:'#C8775B', primaryPale:'#EAC8B4', accent:'#BC5A37', accentSoft:'#E0A085', accentPale:'#F2D9C9', ink:'#3D1F16', inkSoft:'#7A5547', inkFaint:'#A9867D', line:'#E6D5CD', trunk:'#7F4B35' }, sceneBgStart:'#F2E5DF', sceneBgEnd:'#D3B7A2', treeBgStart:'#F2D1C3', treeBgEnd:'#D8A28D' },
+  europa:    { nome: 'Europa',   requisito: { tipo:'streak', valor:45, desc:'streak de 45 dias' }, cores: { bg:'#F3F4EC', bgCard:'#FCFDF7', primary:'#5B7A41', primaryLight:'#8CB076', primaryPale:'#CFD6B0', accent:'#A7C375', accentSoft:'#D8E2B5', accentPale:'#EDF1D9', ink:'#303F26', inkSoft:'#6A7D55', inkFaint:'#9AA07C', line:'#D8DFC7', trunk:'#63734C' }, sceneBgStart:'#E9ECCD', sceneBgEnd:'#C7D1A6', treeBgStart:'#E9ECCD', treeBgEnd:'#C7D1A6' },
+  nevoa:     { nome: 'Névoa',    requisito: { tipo:'frutos', valor:8, desc:'8 meses com frutos' }, cores: { bg:'#E9EFF4', bgCard:'#F6FBFF', primary:'#6A7F91', primaryLight:'#94A8BF', primaryPale:'#D7E3EE', accent:'#7DA2C0', accentSoft:'#C7DAE9', accentPale:'#E8F1F7', ink:'#243445', inkSoft:'#5A6E7F', inkFaint:'#8A9DAF', line:'#D7E2EA', trunk:'#5F6B79' }, sceneBgStart:'#E6EFF6', sceneBgEnd:'#C9D9E4', treeBgStart:'#DDE7F0', treeBgEnd:'#B6C8DA' }
+};
+
+function aplicarTema(key, kind = 'scene') {
+  const t = THEMES[key] || THEMES.padrao;
+  const r = document.documentElement.style;
+  if (kind === 'scene' || kind === 'both') {
+    r.setProperty('--bg', t.cores.bg);
+    r.setProperty('--scene-bg-start', t.sceneBgStart || t.cores.bg);
+    r.setProperty('--scene-bg-end', t.sceneBgEnd || t.cores.bgCard);
+    r.setProperty('--bg-card', t.cores.bgCard);
+    r.setProperty('--primary', t.cores.primary);
+    r.setProperty('--primary-light', t.cores.primaryLight);
+    r.setProperty('--primary-pale', t.cores.primaryPale);
+    r.setProperty('--accent', t.cores.accent);
+    r.setProperty('--accent-soft', t.cores.accentSoft);
+    r.setProperty('--accent-pale', t.cores.accentPale);
+    r.setProperty('--ink', t.cores.ink);
+    r.setProperty('--ink-soft', t.cores.inkSoft);
+    r.setProperty('--ink-faint', t.cores.inkFaint);
+    r.setProperty('--line', t.cores.line);
+    if (t.cores.trunk) r.setProperty('--trunk', t.cores.trunk);
+    state.activeSceneTheme = key;
+  }
+  if (kind === 'tree' || kind === 'both') {
+    r.setProperty('--tree-primary', t.cores.primary);
+    r.setProperty('--tree-primary-light', t.cores.primaryLight);
+    r.setProperty('--tree-accent', t.cores.accent);
+    r.setProperty('--tree-accent-soft', t.cores.accentSoft);
+    r.setProperty('--tree-accent-pale', t.cores.accentPale);
+    r.setProperty('--tree-line', t.cores.line);
+    if (t.cores.trunk) r.setProperty('--tree-trunk', t.cores.trunk);
+    if (t.treeBgStart) r.setProperty('--tree-bg-start', t.treeBgStart);
+    if (t.treeBgEnd) r.setProperty('--tree-bg-end', t.treeBgEnd);
+    state.activeTreeTheme = key;
+  }
+}
+
+function temaDesbloqueado(key) {
+  return key === 'padrao' || state.unlockedThemes.includes(key);
+}
+
+function exibirPopUpDesbloqueioTema(themeKey) {
+  const t = THEMES[themeKey];
+  if (!t) return;
+  const panel = document.getElementById('theme-unlock-panel');
+  document.getElementById('unlock-title').textContent = `Novo Tema: ${t.nome}!`;
+  document.getElementById('unlock-desc').textContent = t.requisito ? `Conquistado por: ${t.requisito.desc}` : 'Um novo tema foi liberado!';
+  
+  const previewCard = document.getElementById('unlock-preview-card');
+  previewCard.style.background = `linear-gradient(180deg, ${t.sceneBgStart || t.cores.bg}, ${t.sceneBgEnd || t.cores.bgCard})`;
+  previewCard.innerHTML = wrapTreeSvg(svgArvore('flor', themeKey));
+
+  const applyBtn = document.getElementById('unlock-apply-btn');
+  applyBtn.onclick = () => {
+    aplicarTema(themeKey, 'both');
+    render();
+    renderTemas();
+    panel.classList.remove('open');
+    mostrarToast(`✨ Tema ${t.nome} aplicado!`);
+  };
+
+  const closeBtn = document.getElementById('unlock-close-btn');
+  closeBtn.onclick = () => panel.classList.remove('open');
+
+  panel.classList.add('open');
+}
+
+function verificarDesbloqueiosDeTema() {
+  Object.keys(THEMES).forEach(key => {
+    if (state.unlockedThemes.includes(key)) return;
+    const req = THEMES[key].requisito;
+    if (!req) return;
+    let atingiu = false;
+    if (req.tipo === 'streak' && state.streak >= req.valor) atingiu = true;
+    if (req.tipo === 'frutos' && state.monthsWithFruit >= req.valor) atingiu = true;
+    if (!atingiu) return;
+    state.unlockedThemes.push(key);
+    exibirPopUpDesbloqueioTema(key);
+  });
+}
+
+function triggerTreeEvolutionAnimation(novoNivel) {
+  const stageEl = document.getElementById('tree-stage');
+  if (!stageEl) return;
+  stageEl.classList.remove('tree-evolving');
+  void stageEl.offsetWidth;
+  stageEl.classList.add('tree-evolving');
+
+  const badge = document.createElement('div');
+  badge.className = 'evolution-badge';
+  badge.textContent = `✨ NÍVEL ${novoNivel}!`;
+  stageEl.appendChild(badge);
+  setTimeout(() => badge.remove(), 1400);
+
+  setTimeout(() => stageEl.classList.remove('tree-evolving'), 1000);
+}
+
+function renderTemas() {
+  const stats = document.getElementById('temas-stats');
+  stats.innerHTML = `🌟 <b>Tema do Cenário em uso:</b> ${THEMES[state.activeSceneTheme].nome} &nbsp;|&nbsp; 🌳 <b>Espécie da Árvore em uso:</b> ${THEMES[state.activeTreeTheme].nome}`;
+  const wrap = document.getElementById('temas-lista');
+  
+  const speciesNames = {
+    carvalho: 'Carvalho Imperial', bordo: 'Bordo Outonal (Maple)', pinheiro: 'Pinheiro Noturno',
+    costeira: 'Salgueiro Chorão', cerejeira: 'Cerejeira (Sakura)', ipe: 'Ipê Dourado (Primavera)', acacia: 'Acácia do Deserto',
+    sequoia: 'Sequóia Canadense', betula: 'Bétula Prateada'
+  };
+
+  wrap.innerHTML = `
+    <div class="theme-group-title">🌳 Escolher Espécie & Aparência da Árvore</div>
+    <div class="theme-section-list">
+      ${Object.keys(THEMES).map(key => {
+        const t = THEMES[key];
+        const especie = THEME_SPECIES[key] || 'carvalho';
+        let especieNome = speciesNames[especie] || especie;
+        if (key === 'amanhecer') especieNome = 'Cerejeira do Amanhecer';
+        const desbloqueado = temaDesbloqueado(key);
+        const ativo = state.activeTreeTheme === key;
+        const req = t.requisito;
+        return `<div class="theme-card ${desbloqueado ? '' : 'locked'} ${ativo ? 'active' : ''}" data-tema="${key}" data-kind="tree">
+          <div class="theme-swatch" style="background:${desbloqueado ? `linear-gradient(135deg, ${t.cores.primaryLight}, ${t.cores.primary})` : '#C1C1C1'}"></div>
+          <div class="theme-info">
+            <b>${desbloqueado ? especieNome : 'Bloqueado'}</b>
+            <span>${desbloqueado ? (ativo ? 'Árvore em uso' : 'Mudar Árvore') : (req ? req.desc : '')}</span>
+          </div>
+          ${ativo ? '<span class="theme-tag">🌳 Árvore Ativa</span>' : ''}
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="theme-group-title" style="margin-top:32px;">🎨 Escolher Clima & Luz do Cenário</div>
+    <div class="theme-section-list">
+      ${Object.keys(THEMES).map(key => {
+        const t = THEMES[key];
+        const desbloqueado = temaDesbloqueado(key);
+        const ativo = state.activeSceneTheme === key;
+        const req = t.requisito;
+        return `<div class="theme-card ${desbloqueado ? '' : 'locked'} ${ativo ? 'active' : ''}" data-tema="${key}" data-kind="scene">
+          <div class="theme-swatch" style="background:${desbloqueado ? `linear-gradient(180deg, ${t.sceneBgStart || t.cores.bg}, ${t.sceneBgEnd || t.cores.bgCard})` : '#C1C1C1'}"></div>
+          <div class="theme-info">
+            <b>${desbloqueado ? t.nome : 'Bloqueado'}</b>
+            <span>${desbloqueado ? (ativo ? 'Cenário em uso' : 'Mudar Cenário') : (req ? req.desc : '')}</span>
+          </div>
+          ${ativo ? '<span class="theme-tag" style="background:var(--accent)">🎨 Cenário Ativo</span>' : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  wrap.querySelectorAll('.theme-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const key = card.getAttribute('data-tema');
+      const kind = card.getAttribute('data-kind') || 'scene';
+      if (!temaDesbloqueado(key)) return;
+      aplicarTema(key, kind);
+      render();
+      renderTemas();
+    });
+  });
+}
+
+function renderHabitsControls() {
+  const container = document.getElementById('controls-list');
+  container.innerHTML = state.habits.map(h => {
+    return `<div class="control-row">
+      <label for="in-${h.id}"><span>${h.label}</span><span id="v-${h.id}">${h.val}${h.unit}</span></label>
+      <input id="in-${h.id}" type="range" min="${h.min}" max="${h.max}" step="${h.step}" value="${h.val}">
+    </div>`;
+  }).join('');
+
+  state.habits.forEach(h => {
+    const el = document.getElementById('in-' + h.id);
+    const label = document.getElementById('v-' + h.id);
+    if (el) {
+      el.addEventListener('input', () => {
+        h.val = parseFloat(el.value);
+        label.textContent = h.val + h.unit;
+      });
+    }
+  });
+}
+
+function renderHistoryGrid() {
+  const grid = document.getElementById('historico-grid');
+  let boxes = '';
+  for (let i = 1; i <= MONTH_LENGTH; i++) {
+    const entry = state.log.find(l => l.day === i);
+    let cls = '', statusIcon = i;
+    if (i < state.day) {
+      if (entry) {
+        if (entry.score >= 60) { cls = 'done'; statusIcon = `d${i} 🟢`; }
+        else { cls = 'fail'; statusIcon = `d${i} 🔴`; }
+      } else {
+        cls = 'shield'; statusIcon = `d${i} 🛡️`;
+      }
+    }
+    boxes += `<div class="day-box ${cls}">
+      <span style="font-weight:600">${statusIcon}</span>
+      <span style="font-size:.7rem;opacity:.8">${entry ? entry.score + ' XP' : ''}</span>
+    </div>`;
+  }
+  grid.innerHTML = boxes;
+}
+
+function mostrarToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => el.classList.remove('show'), 3400);
+}
+
+function atualizarCorPorHora() {
+  const hora = new Date().getHours();
+  const root = document.documentElement.style;
+  if (hora >= 6 && hora < 12) root.setProperty('--time-overlay', 'rgba(178,215,255,0.18)');
+  else if (hora >= 12 && hora < 18) root.setProperty('--time-overlay', 'rgba(255,215,154,0.18)');
+  else root.setProperty('--time-overlay', 'rgba(16,28,58,0.28)');
+}
+
+function render() {
+  const nivel = nivelAPartirDeXp(state.monthXp);
+  const estagio = estagioPorNivel(nivel);
+  const xpBase = xpParaNivel(nivel);
+  const xpProximo = xpParaNivel(nivel + 1);
+  const progresso = Math.min(100, Math.round(((state.monthXp - xpBase) / (xpProximo - xpBase)) * 100));
+
+  if (nivel > state.previousLevel) {
+    triggerTreeEvolutionAnimation(nivel);
+    state.previousLevel = nivel;
+  } else {
+    state.previousLevel = nivel;
+  }
+
+  document.getElementById('day-pill').textContent = `dia ${state.day}`;
+  document.getElementById('month-pill').textContent = `mês ${state.month}`;
+  const shieldEl = document.getElementById('shield-status');
+  const faltamParaEscudo = DIAS_POR_ESCUDO - state.goodStreakForShield;
+  shieldEl.textContent = state.shields >= MAX_ESCUDOS ? `${state.shields} escudos (máx)` : `${state.shields} escudo${state.shields === 1 ? '' : 's'} · +1 em ${faltamParaEscudo}d`;
+
+  const treeWrap = document.getElementById('tree-stage');
+  const oldCanvas = document.getElementById('weather-canvas');
+  treeWrap.innerHTML = wrapTreeSvg(svgArvore(estagio.key, state.activeTreeTheme));
+  if (oldCanvas) treeWrap.appendChild(oldCanvas);
+
+  document.getElementById('stage-label').textContent = estagio.label;
+  document.getElementById('stage-sub').textContent = `nível ${nivel}`;
+  document.getElementById('xp-current').textContent = `${state.monthXp} xp`;
+  document.getElementById('xp-next').textContent = `próximo nível: ${xpProximo} xp`;
+  document.getElementById('xp-fill').style.width = progresso + '%';
+  document.getElementById('adm-day').value = state.day;
+  document.getElementById('adm-streak').value = state.streak;
+  document.getElementById('adm-month').value = state.month;
+  document.getElementById('adm-monthxp').value = state.monthXp;
+  document.getElementById('adm-monthsfruit').value = state.monthsWithFruit;
+  document.getElementById('adm-shields').value = state.shields;
+  document.getElementById('adm-goodstreak').value = state.goodStreakForShield;
+
+  renderHabitsControls();
+}
+
+function executarRebirth() {
+  const nivelAtual = nivelAPartirDeXp(state.monthXp);
+  const estagioAtual = estagioPorNivel(nivelAtual);
+  const deuFrutos = estagioAtual.key === 'flor';
+  if (deuFrutos) state.monthsWithFruit += 1;
+  const scoreMedio = state.monthXp / MONTH_LENGTH;
+  const bonus = Math.round(Math.min(60, Math.max(0, scoreMedio - 40)) * 2.2);
+  state.month += 1;
+  state.monthXp = bonus;
+  verificarDesbloqueiosDeTema();
+  mostrarToast(`🌸 Sua árvore deu frutos! O broto do mês ${state.month} nasce com bônus de ${bonus} xp.`);
+  render();
+}
+
+function avancarDia(score, partes) {
+  const diaBom = score >= 60;
+  if (diaBom) {
+    state.streak += 1;
+    state.goodStreakForShield += 1;
+    if (state.goodStreakForShield >= DIAS_POR_ESCUDO && state.shields < MAX_ESCUDOS) {
+      state.goodStreakForShield = 0;
+      state.shields += 1;
+      mostrarToast('🛡️ Você ganhou um escudo por consistência!');
+    }
+  } else {
+    state.goodStreakForShield = 0;
+    if (state.shields > 0) {
+      state.shields -= 1;
+      mostrarToast('🛡️ Escudo usado — sua streak foi protegida hoje.');
+    } else {
+      state.streak = 0;
+    }
+  }
+  if (partes) state.lastHabitScores = partes;
+  state.monthXp += score;
+  state.totalXpLifetime += score;
+  state.log.push({ day: state.day, score, streak: state.streak, month: state.month });
+  state.day += 1;
+  verificarDesbloqueiosDeTema();
+  if (partes) {
+    const resultEl = document.getElementById('score-result');
+    document.getElementById('score-big').textContent = score;
+    const maxes = { sono: 35, tela: 25, exercicio: 30, meditacao: 10 };
+    const labels = { sono: 'sono', tela: 'tela', exercicio: 'exercício', meditacao: 'meditação' };
+    document.getElementById('score-breakdown').innerHTML = Object.keys(partes).map(k => {
+      const pct = Math.round((partes[k] / (maxes[k] || 30)) * 100);
+      return `<div class="score-bar-row"><span class="label">${labels[k] || k}</span><span class="track"><span class="fill" style="width:${pct}%"></span></span><span class="val">${partes[k]}/${maxes[k] || 30}</span></div>`;
+    }).join('');
+    resultEl.classList.add('show');
+    clearTimeout(window.__scoreTimer);
+    window.__scoreTimer = setTimeout(() => resultEl.classList.remove('show'), 5000);
+  }
+  const cruzouMes = state.day > MONTH_LENGTH;
+  if (cruzouMes) {
+    state.day = 1;
+    executarRebirth();
+  }
+  render();
+  renderTemas();
+}
+
+// DYNAMIC WEATHER ENGINE
+let weatherCanvas, weatherCtx, particles = [];
+
+function initWeatherEngine() {
+  weatherCanvas = document.getElementById('weather-canvas');
+  if (!weatherCanvas) return;
+  weatherCtx = weatherCanvas.getContext('2d');
+  resizeWeatherCanvas();
+  window.addEventListener('resize', resizeWeatherCanvas);
+  spawnParticles();
+  requestAnimationFrame(loopWeather);
+}
+
+function resizeWeatherCanvas() {
+  if (!weatherCanvas) return;
+  const parent = weatherCanvas.parentElement;
+  weatherCanvas.width = parent.clientWidth;
+  weatherCanvas.height = parent.clientHeight;
+}
+
+function setWeatherMode(mode) {
+  state.activeWeather = mode;
+  document.querySelectorAll('.weather-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-weather') === mode);
+  });
+  spawnParticles();
+}
+
+function spawnParticles() {
+  particles = [];
+  if (!weatherCanvas) return;
+  const w = weatherCanvas.width, h = weatherCanvas.height;
+  const mode = state.activeWeather;
+
+  if (mode === 'chuva') {
+    for (let i = 0; i < 70; i++) particles.push({ x: Math.random() * w, y: Math.random() * h, length: 12 + Math.random() * 14, speed: 10 + Math.random() * 8 });
+  } else if (mode === 'vento') {
+    for (let i = 0; i < 30; i++) particles.push({ x: Math.random() * w, y: Math.random() * h, size: 5 + Math.random() * 6, speedX: 2 + Math.random() * 3.5, speedY: Math.random() * 1.5 - 0.75, rot: Math.random() * 360, rotSpeed: Math.random() * 4 - 2, color: ['#E67E22', '#D35400', '#F1C40F'][Math.floor(Math.random()*3)] });
+  } else if (mode === 'neve') {
+    for (let i = 0; i < 50; i++) particles.push({ x: Math.random() * w, y: Math.random() * h, r: 2 + Math.random() * 3.5, speedY: 1 + Math.random() * 1.8, drift: Math.random() * 1 - 0.5, opacity: 0.6 + Math.random() * 0.4 });
+  } else if (mode === 'sol') {
+    for (let i = 0; i < 20; i++) particles.push({ x: Math.random() * w, y: Math.random() * h, r: 3 + Math.random() * 5, speedY: -0.3 - Math.random() * 0.4, opacity: 0.2 + Math.random() * 0.5 });
+  }
+}
+
+function loopWeather() {
+  if (!weatherCtx) return;
+  const w = weatherCanvas.width, h = weatherCanvas.height;
+  weatherCtx.clearRect(0, 0, w, h);
+  const mode = state.activeWeather;
+
+  if (mode === 'chuva') {
+    weatherCtx.strokeStyle = 'rgba(180, 220, 255, 0.6)';
+    weatherCtx.lineWidth = 1.6;
+    weatherCtx.beginPath();
+    particles.forEach(p => {
+      weatherCtx.moveTo(p.x, p.y);
+      weatherCtx.lineTo(p.x - 2, p.y + p.length);
+      p.y += p.speed;
+      if (p.y > h) { p.y = -p.length; p.x = Math.random() * w; }
+    });
+    weatherCtx.stroke();
+  } else if (mode === 'vento') {
+    particles.forEach(p => {
+      weatherCtx.save();
+      weatherCtx.translate(p.x, p.y);
+      weatherCtx.rotate((p.rot * Math.PI) / 180);
+      weatherCtx.fillStyle = p.color;
+      weatherCtx.beginPath();
+      weatherCtx.ellipse(0, 0, p.size, p.size * 0.4, 0, 0, Math.PI * 2);
+      weatherCtx.fill();
+      weatherCtx.restore();
+      p.x += p.speedX;
+      p.y += p.speedY;
+      p.rot += p.rotSpeed;
+      if (p.x > w + 20) { p.x = -20; p.y = Math.random() * h; }
+    });
+  } else if (mode === 'neve') {
+    weatherCtx.fillStyle = '#FFFFFF';
+    particles.forEach(p => {
+      weatherCtx.globalAlpha = p.opacity;
+      weatherCtx.beginPath();
+      weatherCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      weatherCtx.fill();
+      p.y += p.speedY;
+      if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
+    });
+  } else if (mode === 'sol') {
+    particles.forEach(p => {
+      weatherCtx.globalAlpha = p.opacity;
+      weatherCtx.fillStyle = '#FFF59D';
+      weatherCtx.beginPath();
+      weatherCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      weatherCtx.fill();
+      p.y += p.speedY;
+      if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+    });
+  }
+  requestAnimationFrame(loopWeather);
+}
+
+// WEB AUDIO SYNTHESIZER
+let audioCtx;
+function toggleAudio() {
+  state.soundEnabled = !state.soundEnabled;
+  const btn = document.getElementById('audio-toggle');
+  btn.textContent = state.soundEnabled ? '🔊 Som: On' : '🔇 Som: Off';
+  if (state.soundEnabled) {
+    if (!audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+      const bufferSize = audioCtx.sampleRate * 2;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(750, audioCtx.currentTime);
+      const gainNode = audioCtx.createGain();
+      gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      whiteNoise.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      whiteNoise.start();
+    } else { audioCtx.resume(); }
+  } else { if (audioCtx) audioCtx.suspend(); }
+}
+
+document.getElementById('btn-confirmar').addEventListener('click', () => {
+  const habitVals = {};
+  state.habits.forEach(h => habitVals[h.id] = h.val);
+  const { total, partes } = calcularScoreDia(habitVals);
+  avancarDia(total, partes);
+});
+
+// MODAL TOGGLES
+const historicoPanel = document.getElementById('historico-panel');
+document.getElementById('historico-toggle').addEventListener('click', () => { renderHistoryGrid(); historicoPanel.classList.add('open'); });
+document.getElementById('historico-close').addEventListener('click', () => historicoPanel.classList.remove('open'));
+
+const adminPanel = document.getElementById('admin-panel');
+document.getElementById('admin-toggle').addEventListener('click', () => adminPanel.classList.add('open'));
+document.getElementById('admin-close').addEventListener('click', () => adminPanel.classList.remove('open'));
+
+document.getElementById('adm-apply').addEventListener('click', () => {
+  state.day = parseInt(document.getElementById('adm-day').value) || state.day;
+  state.streak = parseInt(document.getElementById('adm-streak').value) || 0;
+  state.month = parseInt(document.getElementById('adm-month').value) || state.month;
+  state.monthXp = parseInt(document.getElementById('adm-monthxp').value) || 0;
+  state.monthsWithFruit = parseInt(document.getElementById('adm-monthsfruit').value) || 0;
+  state.shields = Math.max(0, Math.min(MAX_ESCUDOS, parseInt(document.getElementById('adm-shields').value) || 0));
+  render();
+});
+
+document.getElementById('adm-skip').addEventListener('click', () => {
+  const dias = Math.max(1, parseInt(document.getElementById('adm-skip-days').value) || 1);
+  const scoreFixo = Math.min(100, Math.max(0, parseInt(document.getElementById('adm-skip-score').value) || 0));
+  for (let i = 0; i < dias; i++) avancarDia(scoreFixo, null);
+});
+
+document.getElementById('adm-unlock-all').addEventListener('click', () => {
+  state.unlockedThemes = Object.keys(THEMES);
+  renderTemas();
+  mostrarToast('🔓 Todos os temas foram desbloqueados para avaliação!');
+});
+
+document.getElementById('adm-force-rebirth').addEventListener('click', () => executarRebirth());
+document.getElementById('adm-reset').addEventListener('click', () => {
+  state.day = 1; state.streak = 0; state.monthXp = 0; state.log = [];
+  render();
+});
+
+const temasPanel = document.getElementById('temas-panel');
+document.getElementById('temas-toggle').addEventListener('click', () => { renderTemas(); temasPanel.classList.add('open'); });
+document.getElementById('temas-close').addEventListener('click', () => temasPanel.classList.remove('open'));
+
+document.getElementById('audio-toggle').addEventListener('click', toggleAudio);
+
+document.querySelectorAll('.weather-btn').forEach(btn => {
+  btn.addEventListener('click', () => setWeatherMode(btn.getAttribute('data-weather')));
+});
+
+const scoreCloseBtn = document.getElementById('score-close');
+if (scoreCloseBtn) scoreCloseBtn.addEventListener('click', () => document.getElementById('score-result').classList.remove('show'));
+
+document.addEventListener('DOMContentLoaded', () => {
+  atualizarCorPorHora();
+  setInterval(atualizarCorPorHora, 60000);
+  aplicarTema(state.activeSceneTheme, 'scene');
+  aplicarTema(state.activeTreeTheme, 'tree');
+  initWeatherEngine();
+  render();
+  renderTemas();
+});
+</script>
+</body>
+</html>
