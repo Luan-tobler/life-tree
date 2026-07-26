@@ -1203,6 +1203,7 @@ function avancarDia(score, partes) {
     }
   }
   if (partes) state.lastHabitScores = partes;
+  // normas por hábito já atualizadas em calcularScoreDia
   state.monthXp += score;
   state.totalXpLifetime += score;
   state.log.push({ day: state.day, score, streak: state.streak, month: state.month });
