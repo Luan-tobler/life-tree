@@ -550,9 +550,12 @@ function aplicarSelecaoDeHabitos(ids) {
   state.habits.forEach(h => anteriores[h.id] = h.val);
   state.habits = state.selectedHabits.map(id => {
     const c = catalogById(id);
-    return { id: c.id, label: c.label, emoji: c.emoji, min: c.min, max: c.max, step: c.step, unit: c.unit, val: anteriores[id] !== undefined ? anteriores[id] : c.val };
+    const meta = metaDe(id);
+    return { id: c.id, label: c.label, emoji: c.emoji, min: c.min, max: c.max, step: c.step, unit: c.unit, val: anteriores[id] !== undefined ? anteriores[id] : meta.miss };
   });
+  state.completedTasks = (state.completedTasks || []).filter(id => state.selectedHabits.indexOf(id) !== -1);
 }
+
 
 function pesosDosHabitos() {
   const pesos = {};
