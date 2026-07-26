@@ -490,8 +490,28 @@ let state = {
   previousLevel: 1,
   habits: [],
   selectedHabits: ['sono', 'tela', 'exercicio', 'meditacao'],
+  completedTasks: [],
+  xpHoje: 0,
   lastHabitNorms: { sono: 1, tela: 1, exercicio: .5, meditacao: 1 }
 };
+
+// METAS DE CADA TAREFA DIÁRIA: goal = valor quando concluída, miss = valor quando não concluída
+const TASK_META = {
+  sono:        { goal: 8,   miss: 5,   texto: 'Dormir de 7h30 a 8h30' },
+  tela:        { goal: 40,  miss: 180, texto: 'Ficar abaixo de 1h de tela recreativa' },
+  exercicio:   { goal: 30,  miss: 0,   texto: 'Se movimentar por 30 min' },
+  meditacao:   { goal: 10,  miss: 0,   texto: 'Meditar 10 min' },
+  respiracao:  { goal: 5,   miss: 0,   texto: 'Fazer 5 min de respiração lenta' },
+  agua:        { goal: 8,   miss: 2,   texto: 'Beber 8 copos de água' },
+  natureza:    { goal: 20,  miss: 0,   texto: 'Passar 20 min ao ar livre' },
+  cafeina:     { goal: 1,   miss: 4,   texto: 'No máximo 1 dose de cafeína' },
+  social:      { goal: 30,  miss: 0,   texto: 'Conversar 30 min com alguém' },
+  gratidao:    { goal: 5,   miss: 0,   texto: 'Anotar 3 coisas boas do dia' },
+  leitura:     { goal: 20,  miss: 0,   texto: 'Fazer 20 min de pausa sem tela' },
+  alongamento: { goal: 10,  miss: 0,   texto: 'Alongar por 10 min' }
+};
+function metaDe(id) { return TASK_META[id] || { goal: catalogById(id) ? catalogById(id).val : 1, miss: 0, texto: 'Concluir' }; }
+
 
 // CATÁLOGO DE HÁBITOS ANTI-CORTISOL — o usuário escolhe quais quer cultivar
 const HABIT_CATALOG = [
