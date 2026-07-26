@@ -89,6 +89,17 @@
   .control-row label{display:flex;justify-content:space-between;font-size:.95rem;font-weight:600;color:var(--ink-soft);}
   .control-row label span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary);background:var(--primary-pale);padding:3px 10px;border-radius:8px;font-size:.85rem;}
   input[type=range]{width:100%;accent-color:var(--primary);height:6px;border-radius:999px;cursor:pointer;}
+  .task-row{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--bg-card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;cursor:pointer;transition:all .18s var(--ease);color:inherit;box-shadow:none;}
+  .task-row:hover{border-color:var(--primary);transform:translateY(-1px);}
+  .task-row.done{background:var(--primary-pale);border-color:var(--primary);}
+  .task-check{flex:0 0 26px;height:26px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff;}
+  .task-row.done .task-check{background:var(--primary);border-color:var(--primary);}
+  .task-body{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;}
+  .task-title{font-weight:600;font-size:.98rem;color:var(--ink);}
+  .task-row.done .task-title{color:var(--primary);}
+  .task-desc{font-size:.8rem;color:var(--ink-soft);}
+  .task-xp{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:600;color:var(--primary);background:var(--primary-pale);padding:4px 9px;border-radius:999px;white-space:nowrap;}
+  .task-row.done .task-xp{background:var(--primary);color:#fff;}
   #btn-confirmar{width:100%;max-width:260px;justify-self:center;padding:14px 22px;font-size:1rem;margin-top:4px;}
   
   .month-grid{display:grid;grid-template-columns:repeat(6, 1fr);gap:10px;margin-top:16px;}
@@ -306,9 +317,10 @@
     </section>
     <section class="controls">
       <div class="controls-header">
-        <h3>Registrar Hábitos do Dia</h3>
+        <h3>Tarefas do Dia</h3>
+        <span id="tasks-summary" style="font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:var(--primary);background:var(--primary-pale);padding:4px 10px;border-radius:999px;">0/0 · +0 xp hoje</span>
       </div>
-      <div id="controls-list" style="display:grid;gap:20px;"></div>
+      <div id="controls-list" style="display:grid;gap:10px;"></div>
       <button id="btn-confirmar" type="button">Confirmar dia</button>
     </section>
   </main>
@@ -1537,7 +1549,7 @@ document.getElementById('adm-unlock-all').addEventListener('click', () => {
 
 document.getElementById('adm-force-rebirth').addEventListener('click', () => executarRebirth());
 document.getElementById('adm-reset').addEventListener('click', () => {
-  state.day = 1; state.streak = 0; state.monthXp = 0; state.log = [];
+  state.day = 1; state.streak = 0; state.monthXp = 0; state.log = []; state.completedTasks = []; state.xpHoje = 0;
   render();
 });
 
@@ -1832,7 +1844,8 @@ function pararSessao(concluida) {
     const h = state.habits.find(x => x.id === 'meditacao' || x.id === 'respiracao');
     if (h) {
       h.val = Math.min(h.max, h.val + minutos);
-      renderHabitsControls();
+      if (h.val >= metaDe(h.id).goal && !tarefaConcluida(h.id)) alternarTarefa(h.id, true);
+      else renderHabitsControls();
       mostrarToast(`🧘 ${minutos} min registrados em ${h.label}.`);
     } else {
       mostrarToast(`🧘 Sessão de ${minutos} min concluída.`);
@@ -1932,7 +1945,8 @@ document.getElementById('steps-apply').addEventListener('click', () => {
   const h = state.habits.find(x => x.id === 'exercicio');
   if (!h) { mostrarToast('Ative o hábito de treino em 🎯 para registrar os passos.'); return; }
   h.val = Math.min(h.max, h.val + Math.round(stepsCount / 110));
-  renderHabitsControls();
+  if (h.val >= metaDe(h.id).goal && !tarefaConcluida(h.id)) alternarTarefa(h.id, true);
+  else renderHabitsControls();
   mostrarToast('👣 Passos convertidos em minutos de treino.');
 });
 
@@ -1972,7 +1986,11 @@ document.getElementById('sleep-save').addEventListener('click', async () => {
   let dur = ((new Date(`2020-01-02T${wake}`) - new Date(`2020-01-01T${bed}`)) / 3600000) % 24;
   if (dur <= 0) dur += 24;
   const h = state.habits.find(x => x.id === 'sono');
-  if (h) { h.val = Math.max(h.min, Math.min(h.max, Math.round(dur * 2) / 2)); renderHabitsControls(); }
+  if (h) {
+    h.val = Math.max(h.min, Math.min(h.max, Math.round(dur * 2) / 2));
+    const okSono = h.val >= 7.5 && h.val <= 8.5;
+    if (okSono !== tarefaConcluida('sono')) alternarTarefa('sono', okSono); else renderHabitsControls();
+  }
   msg.textContent = `Lembretes ativos (${hhmmDesligar}, ${bed}, ${wake}). Janela de sono estimada: ${dur.toFixed(1)}h. Mantenha o app aberto ou instalado na tela inicial para receber os avisos.`;
 });
 
@@ -1999,7 +2017,8 @@ document.getElementById('screen-apply').addEventListener('click', () => {
   if (!h) { mostrarToast('Ative o hábito de tempo de tela em 🎯.'); return; }
   const total = screenAcc + (screenOn ? Date.now() - screenStart : 0);
   h.val = Math.min(h.max, h.val + Math.round(total / 60000));
-  renderHabitsControls();
+  const dentroDaMeta = h.val <= metaDe('tela').goal;
+  if (dentroDaMeta !== tarefaConcluida('tela')) alternarTarefa('tela', dentroDaMeta); else renderHabitsControls();
   mostrarToast('📱 Tempo de tela registrado.');
 });
 
