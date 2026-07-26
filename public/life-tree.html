@@ -1291,7 +1291,8 @@ let audioCtx;
 function toggleAudio() {
   state.soundEnabled = !state.soundEnabled;
   const btn = document.getElementById('audio-toggle');
-  btn.textContent = state.soundEnabled ? '🔊 Som: On' : '🔇 Som: Off';
+  btn.textContent = state.soundEnabled ? '🔊' : '🔇';
+  btn.title = state.soundEnabled ? 'Som: On' : 'Som: Off';
   if (state.soundEnabled) {
     if (!audioCtx) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
