@@ -1329,12 +1329,16 @@ function avancarDia(score, partes) {
     }
   }
   if (partes) state.lastHabitScores = partes;
-  // normas por hábito já atualizadas em calcularScoreDia
-  state.monthXp += score;
-  state.totalXpLifetime += score;
+  // XP já creditado ao concluir tarefas durante o dia — soma só o restante (bônus)
+  const restante = Math.max(0, score - state.xpHoje);
+  state.monthXp += restante;
+  state.totalXpLifetime += restante;
+  state.xpHoje = 0;
+  state.completedTasks = [];
   state.log.push({ day: state.day, score, streak: state.streak, month: state.month });
   state.day += 1;
   verificarDesbloqueiosDeTema();
+
   if (partes) {
     const resultEl = document.getElementById('score-result');
     document.getElementById('score-big').textContent = score;
