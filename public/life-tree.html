@@ -1160,26 +1160,61 @@ function renderTemas() {
   });
 }
 
+function xpDaTarefa(id) { return pesosDosHabitos()[id] || 0; }
+
+function tarefaConcluida(id) { return state.completedTasks.indexOf(id) !== -1; }
+
+function alternarTarefa(id, forcar) {
+  const h = state.habits.find(x => x.id === id);
+  if (!h) return;
+  const meta = metaDe(id);
+  const jaFeita = tarefaConcluida(id);
+  const querFeita = forcar === undefined ? !jaFeita : !!forcar;
+  if (querFeita === jaFeita) { renderHabitsControls(); return; }
+  const xp = xpDaTarefa(id);
+  if (querFeita) {
+    state.completedTasks.push(id);
+    h.val = Math.max(h.min, Math.min(h.max, meta.goal));
+    state.monthXp += xp;
+    state.totalXpLifetime += xp;
+    state.xpHoje += xp;
+    mostrarToast(`✅ ${h.label} concluído — +${xp} xp!`);
+  } else {
+    state.completedTasks = state.completedTasks.filter(x => x !== id);
+    h.val = Math.max(h.min, Math.min(h.max, meta.miss));
+    state.monthXp = Math.max(0, state.monthXp - xp);
+    state.totalXpLifetime = Math.max(0, state.totalXpLifetime - xp);
+    state.xpHoje = Math.max(0, state.xpHoje - xp);
+  }
+  verificarDesbloqueiosDeTema();
+  render();
+}
+
 function renderHabitsControls() {
   const container = document.getElementById('controls-list');
+  if (!container) return;
+  const feitas = state.habits.filter(h => tarefaConcluida(h.id)).length;
+  const resumo = document.getElementById('tasks-summary');
+  if (resumo) resumo.textContent = `${feitas}/${state.habits.length} · +${state.xpHoje} xp hoje`;
+
   container.innerHTML = state.habits.map(h => {
-    return `<div class="control-row">
-      <label for="in-${h.id}"><span>${h.emoji || ''} ${h.label}</span><span id="v-${h.id}">${h.val}${h.unit}</span></label>
-      <input id="in-${h.id}" type="range" min="${h.min}" max="${h.max}" step="${h.step}" value="${h.val}">
-    </div>`;
+    const meta = metaDe(h.id);
+    const feita = tarefaConcluida(h.id);
+    return `<button type="button" class="task-row${feita ? ' done' : ''}" data-task="${h.id}">
+      <span class="task-check">${feita ? '✓' : ''}</span>
+      <span class="task-body">
+        <span class="task-title">${h.emoji || ''} ${h.label}</span>
+        <span class="task-desc">${meta.texto}</span>
+      </span>
+      <span class="task-xp">+${xpDaTarefa(h.id)} xp</span>
+    </button>`;
   }).join('');
 
-  state.habits.forEach(h => {
-    const el = document.getElementById('in-' + h.id);
-    const label = document.getElementById('v-' + h.id);
-    if (el) {
-      el.addEventListener('input', () => {
-        h.val = parseFloat(el.value);
-        label.textContent = h.val + h.unit;
-      });
-    }
+  container.querySelectorAll('.task-row').forEach(btn => {
+    btn.addEventListener('click', () => alternarTarefa(btn.getAttribute('data-task')));
   });
 }
+
 
 function renderHistoryGrid() {
   const grid = document.getElementById('historico-grid');
