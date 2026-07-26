@@ -135,7 +135,133 @@
   .admin-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
   #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(8px) scale(.96);padding:12px 20px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:.9rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .3s var(--ease-bounce),transform .3s var(--ease-bounce);z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:88%;text-align:center;}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
-  @media(max-width:720px){.header{padding:20px 16px 14px;flex-direction:column;}.scene{padding:4px 16px 32px;}.tree-card{padding:20px 18px;}.controls{padding:20px 18px;}.panel{padding:22px;}.admin-grid{grid-template-columns:1fr;}.month-grid{grid-template-columns:repeat(3, 1fr);}.progress-row{flex-direction:column;align-items:flex-start;}.progress-info{text-align:left;min-width:0;}.score-result{left:16px;right:16px;top:16px;min-width:0;}}
+  @media(max-width:768px){
+    :root {
+      --tree-stage-height: 280px;
+    }
+    html, body {
+      overscroll-behavior-y: none;
+    }
+    .app-shell {
+      padding-bottom: env(safe-area-inset-bottom, 16px);
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    .header {
+      padding: 16px 16px 10px;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .header h1 {
+      font-size: 1.8rem;
+    }
+    .header p {
+      font-size: 0.88rem;
+    }
+    .header-actions {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .header-actions button {
+      width: 100%;
+      text-align: center;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+    }
+    .scene {
+      padding: 4px 12px 28px;
+      gap: 16px;
+    }
+    .pills {
+      width: 100%;
+      justify-content: center;
+      gap: 6px;
+    }
+    .pill {
+      padding: 6px 12px;
+      font-size: 0.78rem;
+    }
+    .weather-btn {
+      padding: 5px 10px;
+      font-size: 0.75rem;
+    }
+    .tree-card {
+      padding: 14px 14px 16px;
+      border-radius: 24px;
+    }
+    #tree-stage {
+      min-height: 260px;
+      height: 280px;
+      border-radius: 20px;
+    }
+    #tree-stage svg {
+      height: 240px;
+    }
+    .progress-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .progress-track {
+      max-width: 100%;
+    }
+    .progress-info {
+      flex-direction: row;
+      justify-content: space-between;
+      text-align: left;
+      min-width: 0;
+    }
+    .controls {
+      padding: 18px 16px 20px;
+      border-radius: 24px;
+      gap: 14px;
+    }
+    .controls-header h3 {
+      font-size: 1rem;
+    }
+    .control-row label {
+      font-size: 0.88rem;
+    }
+    input[type=range] {
+      height: 10px;
+    }
+    #btn-confirmar {
+      width: 100%;
+      max-width: 100%;
+      padding: 14px 18px;
+      font-size: 1rem;
+    }
+    .panel {
+      padding: 18px;
+      border-radius: 22px;
+      max-height: calc(100vh - 32px);
+      width: 95vw;
+    }
+    .admin-grid {
+      grid-template-columns: 1fr;
+    }
+    .month-grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .day-box {
+      padding: 8px 4px;
+      font-size: 0.78rem;
+    }
+    .score-result {
+      left: 12px;
+      right: 12px;
+      top: 12px;
+      min-width: 0;
+      padding: 16px;
+      border-radius: 20px;
+    }
+    .score-result strong {
+      font-size: 2.1rem;
+    }
+  }
 </style>
 </head>
 <body>
