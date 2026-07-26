@@ -268,6 +268,7 @@
       <button id="historico-toggle" type="button" title="Histórico">📅</button>
       <button id="audio-toggle" type="button" title="Som">🔊</button>
       <button id="temas-toggle" type="button" title="Temas">🎨</button>
+      <button id="objetivos-toggle" type="button" title="Meus objetivos">🎯</button>
       <button id="admin-toggle" type="button" title="Admin">⚡</button>
     </div>
   </header>
@@ -353,6 +354,20 @@
   </div>
 </div>
 
+<!-- Onboarding / Objetivos Modal -->
+<div id="onboarding-panel" class="overlay">
+  <div class="panel" style="max-width:680px;">
+    <h2>O que você quer cultivar? 🌱</h2>
+    <p style="color:var(--ink-soft);margin-top:0;">Escolha só o que faz sentido para você. Todos os hábitos aqui ajudam a reduzir cortisol (o hormônio do estresse) — mas você não precisa fazer todos. Dá para mudar depois no botão 🎯.</p>
+    <div id="onboarding-list" style="display:grid;gap:10px;margin:18px 0;"></div>
+    <p id="onboarding-warn" style="color:#b23c17;font-size:.85rem;display:none;margin:0 0 10px;">Escolha pelo menos um hábito para começar.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+      <button id="onboarding-cancel" type="button" style="background:var(--bg-card);color:var(--ink);border:1px solid var(--line);display:none;">Cancelar</button>
+      <button id="onboarding-save" type="button">Começar a cultivar 🌳</button>
+    </div>
+  </div>
+</div>
+
 <!-- Admin Modal -->
 <div id="admin-panel" class="overlay">
   <div class="panel">
@@ -402,41 +417,72 @@ let state = {
   activeWeather: 'sol',
   soundEnabled: false,
   previousLevel: 1,
-  habits: [
-    { id: 'sono', label: 'Sono', min: 0, max: 12, step: 0.5, val: 8, unit: 'h' },
-    { id: 'tela', label: 'Tela', min: 0, max: 240, step: 10, val: 60, unit: ' min' },
-    { id: 'exercicio', label: 'Exercício', min: 0, max: 120, step: 5, val: 15, unit: ' min' },
-    { id: 'meditacao', label: 'Meditação', min: 0, max: 60, step: 5, val: 10, unit: ' min' }
-  ],
-  lastHabitScores: { sono: 35, tela: 25, exercicio: 15, meditacao: 10 }
+  habits: [],
+  selectedHabits: ['sono', 'tela', 'exercicio', 'meditacao'],
+  lastHabitNorms: { sono: 1, tela: 1, exercicio: .5, meditacao: 1 }
 };
 
-function scoreSono(horas) {
-  const idealMin = 7.5, idealMax = 8.5;
-  if (horas >= idealMin && horas <= idealMax) return 35;
-  const dist = horas < idealMin ? (idealMin - horas) : (horas - idealMax);
-  return Math.max(0, 35 - Math.pow(dist, 1.6) * 6);
+// CATÁLOGO DE HÁBITOS ANTI-CORTISOL — o usuário escolhe quais quer cultivar
+const HABIT_CATALOG = [
+  { id: 'sono', label: 'Sono', emoji: '😴', desc: 'Dormir de 7h30 a 8h30 regula o cortisol matinal.', min: 0, max: 12, step: 0.5, val: 8, unit: 'h', weight: 35,
+    norm: v => { const a = 7.5, b = 8.5; if (v >= a && v <= b) return 1; const d = v < a ? a - v : v - b; return Math.max(0, 1 - Math.pow(d, 1.6) * 0.17); } },
+  { id: 'tela', label: 'Tempo de tela', emoji: '📱', desc: 'Menos telas (principalmente à noite) baixa o estresse.', min: 0, max: 240, step: 10, val: 60, unit: ' min', weight: 25,
+    norm: v => Math.exp(-v / 55) },
+  { id: 'exercicio', label: 'Treino / exercício', emoji: '🏃', desc: 'Movimento moderado queima adrenalina e equilibra o cortisol.', min: 0, max: 120, step: 5, val: 15, unit: ' min', weight: 30,
+    norm: v => 1 - Math.exp(-v / 22) },
+  { id: 'meditacao', label: 'Meditação', emoji: '🧘', desc: 'Atenção plena reduz a resposta ao estresse.', min: 0, max: 60, step: 5, val: 10, unit: ' min', weight: 20,
+    norm: v => 1 - Math.exp(-v / 10) },
+  { id: 'respiracao', label: 'Respiração lenta', emoji: '🌬️', desc: 'Respirar devagar ativa o sistema de calma em poucos minutos.', min: 0, max: 30, step: 1, val: 5, unit: ' min', weight: 15,
+    norm: v => 1 - Math.exp(-v / 4) },
+  { id: 'agua', label: 'Água', emoji: '💧', desc: 'Desidratação leve já eleva o cortisol.', min: 0, max: 14, step: 1, val: 6, unit: ' copos', weight: 12,
+    norm: v => Math.min(1, v / 8) },
+  { id: 'natureza', label: 'Tempo ao ar livre', emoji: '🌳', desc: 'Luz natural e verde acalmam o corpo.', min: 0, max: 120, step: 5, val: 20, unit: ' min', weight: 15,
+    norm: v => 1 - Math.exp(-v / 20) },
+  { id: 'cafeina', label: 'Cafeína', emoji: '☕', desc: 'Menos café ao longo do dia evita picos de cortisol.', min: 0, max: 6, step: 1, val: 2, unit: ' doses', weight: 12,
+    norm: v => Math.max(0, 1 - v / 4) },
+  { id: 'social', label: 'Conexão social', emoji: '🤝', desc: 'Conversa boa libera ocitocina e reduz estresse.', min: 0, max: 120, step: 10, val: 30, unit: ' min', weight: 12,
+    norm: v => 1 - Math.exp(-v / 30) },
+  { id: 'gratidao', label: 'Gratidão / diário', emoji: '📓', desc: 'Escrever o que foi bom reduz ruminação mental.', min: 0, max: 20, step: 1, val: 5, unit: ' min', weight: 10,
+    norm: v => 1 - Math.exp(-v / 5) },
+  { id: 'leitura', label: 'Pausa sem tela', emoji: '📖', desc: 'Ler ou descansar sem estímulos restaura o foco.', min: 0, max: 90, step: 5, val: 15, unit: ' min', weight: 10,
+    norm: v => 1 - Math.exp(-v / 20) },
+  { id: 'alongamento', label: 'Alongamento', emoji: '🤸', desc: 'Soltar a tensão muscular ajuda o corpo a desligar o alerta.', min: 0, max: 45, step: 5, val: 10, unit: ' min', weight: 10,
+    norm: v => 1 - Math.exp(-v / 10) }
+];
+
+function catalogById(id) { return HABIT_CATALOG.find(h => h.id === id); }
+
+function aplicarSelecaoDeHabitos(ids) {
+  const validos = ids.filter(catalogById);
+  state.selectedHabits = validos.length ? validos : ['sono'];
+  const anteriores = {};
+  state.habits.forEach(h => anteriores[h.id] = h.val);
+  state.habits = state.selectedHabits.map(id => {
+    const c = catalogById(id);
+    return { id: c.id, label: c.label, emoji: c.emoji, min: c.min, max: c.max, step: c.step, unit: c.unit, val: anteriores[id] !== undefined ? anteriores[id] : c.val };
+  });
 }
-function scoreTela(minutos) {
-  return Math.max(0, 25 * Math.exp(-minutos / 55));
-}
-function scoreExercicio(minutos) {
-  return Math.min(30, 30 * (1 - Math.exp(-minutos / 22)));
-}
-function scoreMeditacao(minutos) {
-  return Math.min(10, 10 * (1 - Math.exp(-minutos / 10)));
+
+function pesosDosHabitos() {
+  const pesos = {};
+  const soma = state.selectedHabits.reduce((acc, id) => acc + catalogById(id).weight, 0) || 1;
+  state.selectedHabits.forEach(id => { pesos[id] = Math.round((catalogById(id).weight / soma) * 100); });
+  return pesos;
 }
 
 function calcularScoreDia(habitsObj) {
-  const s = scoreSono(habitsObj.sono || 8);
-  const t = scoreTela(habitsObj.tela || 60);
-  const e = scoreExercicio(habitsObj.exercicio || 15);
-  const m = scoreMeditacao(habitsObj.meditacao || 10);
-  const total = Math.round(Math.min(100, s + t + e + m));
-  return {
-    total,
-    partes: { sono: Math.round(s), tela: Math.round(t), exercicio: Math.round(e), meditacao: Math.round(m) }
-  };
+  const pesos = pesosDosHabitos();
+  const partes = {};
+  let total = 0;
+  state.selectedHabits.forEach(id => {
+    const c = catalogById(id);
+    const v = habitsObj[id] !== undefined ? habitsObj[id] : c.val;
+    const n = Math.max(0, Math.min(1, c.norm(v)));
+    state.lastHabitNorms[id] = n;
+    partes[id] = Math.round(n * pesos[id]);
+    total += n * pesos[id];
+  });
+  return { total: Math.round(Math.min(100, total)), partes };
 }
 
 function xpParaNivel(nivel) {
@@ -526,7 +572,7 @@ function habitMapleSamara(cx, cy, r, c) {
 }
 
 function renderHabitFruits(c, speciesKey = 'carvalho') {
-  const p = state.lastHabitScores;
+  const p = state.lastHabitNorms || {};
   let f1 = habitBerrySono, f2 = habitOrangeTela;
 
   if (speciesKey === 'cerejeira') {
@@ -540,12 +586,11 @@ function renderHabitFruits(c, speciesKey = 'carvalho') {
   } else if (speciesKey === 'bordo') {
     f1 = habitMapleSamara; f2 = habitOrangeTela;
   } else {
-    const list = [
-      { key: 'sono', val: p.sono / 35, fn: habitBerrySono },
-      { key: 'tela', val: p.tela / 25, fn: habitOrangeTela },
-      { key: 'exercicio', val: p.exercicio / 30, fn: habitAppleExercicio },
-      { key: 'meditacao', val: p.meditacao / 10, fn: habitLotusMeditacao }
-    ];
+    const fns = { sono: habitBerrySono, tela: habitOrangeTela, exercicio: habitAppleExercicio, meditacao: habitLotusMeditacao,
+      respiracao: habitLotusMeditacao, agua: habitOceanPearl, natureza: habitSakuraBlossom, cafeina: habitOrangeTela,
+      social: habitCoralFlower, gratidao: habitStardustOrb, leitura: habitPineCone, alongamento: habitMapleSamara };
+    const list = state.selectedHabits.map(id => ({ key: id, val: p[id] || 0, fn: fns[id] || habitBerrySono }));
+    while (list.length < 2) list.push({ key: 'extra', val: 0, fn: habitLotusMeditacao });
     list.sort((a,b) => b.val - a.val);
     f1 = list[0].fn; f2 = list[1].fn;
   }
@@ -1028,7 +1073,7 @@ function renderHabitsControls() {
   const container = document.getElementById('controls-list');
   container.innerHTML = state.habits.map(h => {
     return `<div class="control-row">
-      <label for="in-${h.id}"><span>${h.label}</span><span id="v-${h.id}">${h.val}${h.unit}</span></label>
+      <label for="in-${h.id}"><span>${h.emoji || ''} ${h.label}</span><span id="v-${h.id}">${h.val}${h.unit}</span></label>
       <input id="in-${h.id}" type="range" min="${h.min}" max="${h.max}" step="${h.step}" value="${h.val}">
     </div>`;
   }).join('');
@@ -1166,11 +1211,12 @@ function avancarDia(score, partes) {
   if (partes) {
     const resultEl = document.getElementById('score-result');
     document.getElementById('score-big').textContent = score;
-    const maxes = { sono: 35, tela: 25, exercicio: 30, meditacao: 10 };
-    const labels = { sono: 'sono', tela: 'tela', exercicio: 'exercício', meditacao: 'meditação' };
+    const maxes = pesosDosHabitos();
+    const labels = {};
+    HABIT_CATALOG.forEach(c => labels[c.id] = c.label.toLowerCase());
     document.getElementById('score-breakdown').innerHTML = Object.keys(partes).map(k => {
-      const pct = Math.round((partes[k] / (maxes[k] || 30)) * 100);
-      return `<div class="score-bar-row"><span class="label">${labels[k] || k}</span><span class="track"><span class="fill" style="width:${pct}%"></span></span><span class="val">${partes[k]}/${maxes[k] || 30}</span></div>`;
+      const pct = Math.round((partes[k] / (maxes[k] || 1)) * 100);
+      return `<div class="score-bar-row"><span class="label">${labels[k] || k}</span><span class="track"><span class="fill" style="width:${pct}%"></span></span><span class="val">${partes[k]}/${maxes[k] || 1}</span></div>`;
     }).join('');
     resultEl.classList.add('show');
     clearTimeout(window.__scoreTimer);
@@ -1374,7 +1420,50 @@ document.querySelectorAll('.weather-btn').forEach(btn => {
 const scoreCloseBtn = document.getElementById('score-close');
 if (scoreCloseBtn) scoreCloseBtn.addEventListener('click', () => document.getElementById('score-result').classList.remove('show'));
 
+// ONBOARDING / OBJETIVOS
+const ONBOARD_KEY = 'lifetree.habits.v1';
+const onboardingPanel = document.getElementById('onboarding-panel');
+
+function renderOnboarding(selecionados) {
+  document.getElementById('onboarding-list').innerHTML = HABIT_CATALOG.map(c => {
+    const on = selecionados.includes(c.id);
+    return `<label style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:18px;cursor:pointer;background:var(--bg-card);">
+      <input type="checkbox" class="onb-check" value="${c.id}" ${on ? 'checked' : ''} style="margin-top:3px;width:18px;height:18px;accent-color:var(--primary);">
+      <span><b>${c.emoji} ${c.label}</b><br><span style="color:var(--ink-soft);font-size:.85rem;">${c.desc}</span></span>
+    </label>`;
+  }).join('');
+  document.getElementById('onboarding-warn').style.display = 'none';
+}
+
+function abrirOnboarding(primeiraVez) {
+  renderOnboarding(state.selectedHabits);
+  document.getElementById('onboarding-cancel').style.display = primeiraVez ? 'none' : 'inline-flex';
+  document.getElementById('onboarding-save').textContent = primeiraVez ? 'Começar a cultivar 🌳' : 'Salvar objetivos';
+  onboardingPanel.classList.add('open');
+}
+
+document.getElementById('objetivos-toggle').addEventListener('click', () => abrirOnboarding(false));
+document.getElementById('onboarding-cancel').addEventListener('click', () => onboardingPanel.classList.remove('open'));
+document.getElementById('onboarding-save').addEventListener('click', () => {
+  const ids = Array.from(document.querySelectorAll('.onb-check:checked')).map(el => el.value);
+  if (!ids.length) { document.getElementById('onboarding-warn').style.display = 'block'; return; }
+  aplicarSelecaoDeHabitos(ids);
+  try { localStorage.setItem(ONBOARD_KEY, JSON.stringify(ids)); } catch (e) {}
+  onboardingPanel.classList.remove('open');
+  renderHabitsControls();
+  render();
+  mostrarToast('🌱 Seus objetivos foram atualizados!');
+});
+
 document.addEventListener('DOMContentLoaded', () => {
+  let salvos = null;
+  try { salvos = JSON.parse(localStorage.getItem(ONBOARD_KEY) || 'null'); } catch (e) {}
+  if (Array.isArray(salvos) && salvos.length) {
+    aplicarSelecaoDeHabitos(salvos);
+  } else {
+    aplicarSelecaoDeHabitos(state.selectedHabits);
+    setTimeout(() => abrirOnboarding(true), 350);
+  }
   atualizarCorPorHora();
   setInterval(atualizarCorPorHora, 60000);
   aplicarTema(state.activeSceneTheme, 'scene');
