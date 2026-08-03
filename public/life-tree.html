@@ -276,13 +276,24 @@
   <header class="header">
     <h1>Raiz</h1>
     <div class="header-actions">
-      <button id="historico-toggle" type="button" title="Histórico">📅</button>
-      <button id="audio-toggle" type="button" title="Som">🔊</button>
-      <button id="temas-toggle" type="button" title="Temas">🎨</button>
-      <button id="medit-toggle" type="button" title="Meditar">🧘</button>
-      <button id="mobile-toggle" type="button" title="Celular">📱</button>
-      <button id="objetivos-toggle" type="button" title="Meus objetivos">🎯</button>
-      <button id="admin-toggle" type="button" title="Admin">⚡</button>
+      <button id="medit-toggle" type="button" title="Meditar">🧘 Respirar</button>
+      <div class="menu-wrap">
+        <button id="menu-toggle" type="button" title="Mais" aria-label="Mais opções">⋯</button>
+        <div id="menu-pop" class="menu-pop">
+          <button id="historico-toggle" type="button">📅 Histórico</button>
+          <button id="objetivos-toggle" type="button">🎯 Meus objetivos</button>
+          <button id="temas-toggle" type="button">🎨 Temas</button>
+          <button id="mobile-toggle" type="button">📱 Celular</button>
+          <button id="audio-toggle" type="button">🔊 Som</button>
+          <div class="menu-weather">
+            <button class="weather-btn active" data-weather="sol" type="button" title="Sol">☀️</button>
+            <button class="weather-btn" data-weather="chuva" type="button" title="Chuva">🌧️</button>
+            <button class="weather-btn" data-weather="vento" type="button" title="Vento">🍃</button>
+            <button class="weather-btn" data-weather="neve" type="button" title="Neve">❄️</button>
+          </div>
+          <button id="admin-toggle" type="button">⚡ Admin</button>
+        </div>
+      </div>
     </div>
   </header>
   <main class="scene">
@@ -290,15 +301,9 @@
       <div class="tree-card-header">
         <div class="pills">
           <span class="pill" id="day-pill">dia 1</span>
-          <span class="pill" id="month-pill">mês 1</span>
           <span class="pill" id="stage-label">Semente</span>
-          <span class="pill" id="shield-status">0 escudos</span>
-        </div>
-        <div style="display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
-          <button class="weather-btn active" data-weather="sol" type="button" title="Sol">☀️</button>
-          <button class="weather-btn" data-weather="chuva" type="button" title="Chuva">🌧️</button>
-          <button class="weather-btn" data-weather="vento" type="button" title="Vento">🍃</button>
-          <button class="weather-btn" data-weather="neve" type="button" title="Neve">❄️</button>
+          <span class="pill" id="month-pill" hidden>mês 1</span>
+          <span class="pill" id="shield-status" hidden>0 escudos</span>
         </div>
       </div>
       <div id="tree-stage">
