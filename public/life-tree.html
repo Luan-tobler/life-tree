@@ -451,15 +451,32 @@
 
 <!-- Onboarding / Objetivos Modal -->
 <div id="onboarding-panel" class="overlay">
-  <div class="panel" style="max-width:680px;">
+  <div class="panel" style="max-width:560px;">
     <h2>O que você quer cultivar? 🌱</h2>
-    <p style="color:var(--ink-soft);margin-top:0;">Escolha só o que faz sentido para você. Todos os hábitos aqui ajudam a reduzir cortisol (o hormônio do estresse) — mas você não precisa fazer todos. Dá para mudar depois no botão 🎯.</p>
-    <div id="onboarding-list" style="display:grid;gap:10px;margin:18px 0;"></div>
-    <p id="onboarding-warn" style="color:#b23c17;font-size:.85rem;display:none;margin:0 0 10px;">Escolha pelo menos um hábito para começar.</p>
-    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+    <p style="color:var(--ink-soft);margin-top:0;">Escolha um ou dois para começar. Dá para mudar quando quiser.</p>
+    <div id="onboarding-list" style="display:grid;gap:10px;margin:16px 0;"></div>
+    <button id="onboarding-more" type="button" style="background:transparent;color:var(--ink-soft);border:none;box-shadow:none;padding:0;font-size:.85rem;text-decoration:underline;">ver mais opções</button>
+    <p id="onboarding-warn" style="color:#b23c17;font-size:.85rem;display:none;margin:10px 0 0;">Escolha pelo menos um.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px;">
       <button id="onboarding-cancel" type="button" style="background:var(--bg-card);color:var(--ink);border:1px solid var(--line);display:none;">Cancelar</button>
-      <button id="onboarding-save" type="button">Começar a cultivar 🌳</button>
+      <button id="onboarding-save" type="button">Começar 🌳</button>
     </div>
+  </div>
+</div>
+
+<!-- Desabafo Modal -->
+<div id="vent-panel" class="overlay">
+  <div class="panel" style="max-width:560px;">
+    <button id="vent-close" type="button">Fechar</button>
+    <h2>Como você está? 💬</h2>
+    <p style="color:var(--ink-soft);margin-top:0;">Esse espaço é só seu. Escreva o que estiver pesando — fica salvo apenas neste aparelho.</p>
+    <div id="vent-moods" style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;"></div>
+    <textarea id="vent-text" rows="5" placeholder="Hoje eu me sinto..." style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--bg-card);color:var(--ink);font-family:inherit;font-size:.95rem;resize:vertical;"></textarea>
+    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px;">
+      <button id="vent-save" type="button">Guardar 🌿</button>
+    </div>
+    <div id="vent-help" style="display:none;margin-top:16px;border:1px solid var(--line);border-radius:18px;padding:14px;background:var(--bg-card);"></div>
+    <div id="vent-log" style="margin-top:16px;display:grid;gap:8px;"></div>
   </div>
 </div>
 
