@@ -288,6 +288,7 @@
       <div class="menu-wrap">
         <button id="menu-toggle" type="button" title="Mais" aria-label="Mais opções">⋯</button>
         <div id="menu-pop" class="menu-pop">
+          <button id="vent-toggle" type="button">💬 Desabafar</button>
           <button id="historico-toggle" type="button">📅 Histórico</button>
           <button id="objetivos-toggle" type="button">🎯 Meus objetivos</button>
           <button id="temas-toggle" type="button">🎨 Temas</button>
@@ -451,15 +452,32 @@
 
 <!-- Onboarding / Objetivos Modal -->
 <div id="onboarding-panel" class="overlay">
-  <div class="panel" style="max-width:680px;">
+  <div class="panel" style="max-width:560px;">
     <h2>O que você quer cultivar? 🌱</h2>
-    <p style="color:var(--ink-soft);margin-top:0;">Escolha só o que faz sentido para você. Todos os hábitos aqui ajudam a reduzir cortisol (o hormônio do estresse) — mas você não precisa fazer todos. Dá para mudar depois no botão 🎯.</p>
-    <div id="onboarding-list" style="display:grid;gap:10px;margin:18px 0;"></div>
-    <p id="onboarding-warn" style="color:#b23c17;font-size:.85rem;display:none;margin:0 0 10px;">Escolha pelo menos um hábito para começar.</p>
-    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+    <p style="color:var(--ink-soft);margin-top:0;">Escolha um ou dois para começar. Dá para mudar quando quiser.</p>
+    <div id="onboarding-list" style="display:grid;gap:10px;margin:16px 0;"></div>
+    <button id="onboarding-more" type="button" style="background:transparent;color:var(--ink-soft);border:none;box-shadow:none;padding:0;font-size:.85rem;text-decoration:underline;">ver mais opções</button>
+    <p id="onboarding-warn" style="color:#b23c17;font-size:.85rem;display:none;margin:10px 0 0;">Escolha pelo menos um.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px;">
       <button id="onboarding-cancel" type="button" style="background:var(--bg-card);color:var(--ink);border:1px solid var(--line);display:none;">Cancelar</button>
-      <button id="onboarding-save" type="button">Começar a cultivar 🌳</button>
+      <button id="onboarding-save" type="button">Começar 🌳</button>
     </div>
+  </div>
+</div>
+
+<!-- Desabafo Modal -->
+<div id="vent-panel" class="overlay">
+  <div class="panel" style="max-width:560px;">
+    <button id="vent-close" type="button">Fechar</button>
+    <h2>Como você está? 💬</h2>
+    <p style="color:var(--ink-soft);margin-top:0;">Esse espaço é só seu. Escreva o que estiver pesando — fica salvo apenas neste aparelho.</p>
+    <div id="vent-moods" style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;"></div>
+    <textarea id="vent-text" rows="5" placeholder="Hoje eu me sinto..." style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--bg-card);color:var(--ink);font-family:inherit;font-size:.95rem;resize:vertical;"></textarea>
+    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px;">
+      <button id="vent-save" type="button">Guardar 🌿</button>
+    </div>
+    <div id="vent-help" style="display:none;margin-top:16px;border:1px solid var(--line);border-radius:18px;padding:14px;background:var(--bg-card);"></div>
+    <div id="vent-log" style="margin-top:16px;display:grid;gap:8px;"></div>
   </div>
 </div>
 
@@ -1582,21 +1600,40 @@ if (scoreCloseBtn) scoreCloseBtn.addEventListener('click', () => document.getEle
 const ONBOARD_KEY = 'lifetree.habits.v1';
 const onboardingPanel = document.getElementById('onboarding-panel');
 
+const ONB_CORE = ['sono', 'exercicio', 'meditacao', 'tela'];
+let onbExpandido = false;
+
 function renderOnboarding(selecionados) {
-  document.getElementById('onboarding-list').innerHTML = HABIT_CATALOG.map(c => {
+  const lista = onbExpandido
+    ? HABIT_CATALOG
+    : HABIT_CATALOG.filter(c => ONB_CORE.includes(c.id) || selecionados.includes(c.id));
+  document.getElementById('onboarding-list').innerHTML = lista.map(c => {
     const on = selecionados.includes(c.id);
-    return `<label style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:18px;cursor:pointer;background:var(--bg-card);">
-      <input type="checkbox" class="onb-check" value="${c.id}" ${on ? 'checked' : ''} style="margin-top:3px;width:18px;height:18px;accent-color:var(--primary);">
-      <span><b>${c.emoji} ${c.label}</b><br><span style="color:var(--ink-soft);font-size:.85rem;">${c.desc}</span></span>
+    return `<label style="display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:18px;cursor:pointer;background:var(--bg-card);">
+      <input type="checkbox" class="onb-check" value="${c.id}" ${on ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--primary);">
+      <span><b>${c.emoji} ${c.label}</b></span>
     </label>`;
   }).join('');
+  const more = document.getElementById('onboarding-more');
+  if (more) more.style.display = onbExpandido ? 'none' : 'inline';
   document.getElementById('onboarding-warn').style.display = 'none';
 }
 
+function selecaoAtualOnboarding() {
+  return Array.from(document.querySelectorAll('.onb-check:checked')).map(el => el.value);
+}
+
+document.getElementById('onboarding-more').addEventListener('click', () => {
+  const atuais = selecaoAtualOnboarding();
+  onbExpandido = true;
+  renderOnboarding(atuais.length ? atuais : state.selectedHabits);
+});
+
 function abrirOnboarding(primeiraVez) {
+  onbExpandido = !primeiraVez;
   renderOnboarding(state.selectedHabits);
   document.getElementById('onboarding-cancel').style.display = primeiraVez ? 'none' : 'inline-flex';
-  document.getElementById('onboarding-save').textContent = primeiraVez ? 'Começar a cultivar 🌳' : 'Salvar objetivos';
+  document.getElementById('onboarding-save').textContent = primeiraVez ? 'Começar 🌳' : 'Salvar';
   onboardingPanel.classList.add('open');
 }
 
@@ -2048,6 +2085,97 @@ document.getElementById('screen-apply').addEventListener('click', () => {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('medit-timer').textContent = fmtTempo(medDuracao * 60);
 });
+
+// ---- Espaço de desabafo ----
+(function(){
+  const VENT_KEY = 'lifetree.vent.v1';
+  const panel = document.getElementById('vent-panel');
+  const moodsEl = document.getElementById('vent-moods');
+  const textEl = document.getElementById('vent-text');
+  const helpEl = document.getElementById('vent-help');
+  const logEl = document.getElementById('vent-log');
+  const MOODS = [
+    { id: 'ansioso', emoji: '😰', label: 'Ansioso' },
+    { id: 'triste', emoji: '😔', label: 'Triste' },
+    { id: 'cansado', emoji: '🥱', label: 'Cansado' },
+    { id: 'irritado', emoji: '😤', label: 'Irritado' },
+    { id: 'ok', emoji: '🙂', label: 'Ok' }
+  ];
+  let humor = null;
+
+  function lerLog() {
+    try { return JSON.parse(localStorage.getItem(VENT_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function salvarLog(arr) {
+    try { localStorage.setItem(VENT_KEY, JSON.stringify(arr.slice(-30))); } catch (e) {}
+  }
+  function renderMoods() {
+    moodsEl.innerHTML = MOODS.map(m => `<button type="button" class="vent-mood" data-mood="${m.id}" style="background:${humor === m.id ? 'var(--primary)' : 'var(--bg-card)'};color:${humor === m.id ? '#fff' : 'var(--ink)'};border:1px solid var(--line);box-shadow:none;font-size:.85rem;padding:8px 12px;border-radius:999px;">${m.emoji} ${m.label}</button>`).join('');
+  }
+  function renderLog() {
+    const itens = lerLog().slice().reverse().slice(0, 3);
+    logEl.innerHTML = itens.length
+      ? `<p style="color:var(--ink-soft);font-size:.8rem;margin:0;">Últimos registros</p>` + itens.map(i =>
+          `<div style="border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:.85rem;color:var(--ink-soft);"><b>${i.emoji || '🌿'} ${i.data}</b><br>${(i.texto || '').replace(/[<>]/g, '')}</div>`
+        ).join('')
+      : '';
+  }
+  function sugestao(texto, mood) {
+    const t = (texto || '').toLowerCase();
+    if (/(me matar|suic|não quero mais viver|nao quero mais viver|sumir para sempre)/.test(t)) {
+      return { titulo: 'Você não precisa passar por isso sozinho', corpo: 'Se a dor estiver grande demais, fale agora com o CVV: ligue <b>188</b> (24h, gratuito) ou acesse cvv.org.br. Falar com alguém já é um passo.', acao: null };
+    }
+    if (mood === 'ansioso' || /(ansi|pânico|panico|acelerad|preocup)/.test(t)) {
+      return { titulo: 'Vamos baixar o ritmo juntos', corpo: 'A ansiedade responde rápido à respiração lenta. Que tal 5 minutos guiados agora?', acao: 'medit' };
+    }
+    if (mood === 'cansado' || /(cansad|exaust|sem energia|sono)/.test(t)) {
+      return { titulo: 'Seu corpo está pedindo descanso', corpo: 'Não force o dia. Uma pausa sem tela de 10 minutos ou dormir mais cedo hoje já ajuda o cortisol a cair.', acao: null };
+    }
+    if (mood === 'irritado' || /(raiva|irrit|ódio|odio|estress)/.test(t)) {
+      return { titulo: 'Descarregue antes de decidir', corpo: 'Irritação costuma ceder com movimento: 10 minutos de caminhada ou alongamento mudam o corpo antes da cabeça.', acao: null };
+    }
+    if (mood === 'triste' || /(triste|sozinh|vazio|chor)/.test(t)) {
+      return { titulo: 'Tudo bem não estar bem', corpo: 'Mandar uma mensagem para alguém de confiança hoje conta como cuidado. Se isso se repetir por semanas, procurar um psicólogo é um bom passo.', acao: null };
+    }
+    return { titulo: 'Obrigado por escrever', corpo: 'Nomear o que você sente já reduz a resposta de estresse. Se quiser, respire 5 minutos para fechar esse momento.', acao: 'medit' };
+  }
+  function mostrarAjuda(texto, mood) {
+    const s = sugestao(texto, mood);
+    helpEl.innerHTML = `<b style="color:var(--primary);">${s.titulo}</b><p style="color:var(--ink-soft);font-size:.88rem;margin:6px 0 0;">${s.corpo}</p>` +
+      (s.acao === 'medit' ? `<div style="margin-top:10px;"><button id="vent-go-medit" type="button">🧘 Respirar 5 min</button></div>` : '');
+    helpEl.style.display = 'block';
+    const go = document.getElementById('vent-go-medit');
+    if (go) go.addEventListener('click', () => {
+      panel.classList.remove('open');
+      document.getElementById('medit-toggle').click();
+    });
+  }
+
+  moodsEl.addEventListener('click', (e) => {
+    const b = e.target.closest('.vent-mood');
+    if (!b) return;
+    humor = humor === b.dataset.mood ? null : b.dataset.mood;
+    renderMoods();
+  });
+
+  document.getElementById('vent-toggle').addEventListener('click', () => {
+    humor = null; textEl.value = ''; helpEl.style.display = 'none';
+    renderMoods(); renderLog();
+    panel.classList.add('open');
+  });
+  document.getElementById('vent-close').addEventListener('click', () => panel.classList.remove('open'));
+  document.getElementById('vent-save').addEventListener('click', () => {
+    const texto = textEl.value.trim();
+    if (!texto && !humor) { mostrarToast('Escreva algo ou escolha como se sente.'); return; }
+    const m = MOODS.find(x => x.id === humor);
+    const arr = lerLog();
+    arr.push({ data: new Date().toLocaleDateString('pt-BR'), emoji: m ? m.emoji : '🌿', mood: humor, texto });
+    salvarLog(arr);
+    renderLog();
+    mostrarAjuda(texto, humor);
+    mostrarToast('🌿 Guardado só para você.');
+  });
+})();
 </script>
 </body>
 </html>
