@@ -474,7 +474,12 @@
     <div id="vent-moods" style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;"></div>
     <textarea id="vent-text" rows="5" placeholder="Hoje eu me sinto..." style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--bg-card);color:var(--ink);font-family:inherit;font-size:.95rem;resize:vertical;"></textarea>
     <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px;">
-      <button id="vent-save" type="button">Guardar 🌿</button>
+      <button id="vent-save" type="button">Conversar 🌿</button>
+    </div>
+    <div id="vent-chat" style="display:none;margin-top:16px;gap:10px;flex-direction:column;max-height:320px;overflow-y:auto;"></div>
+    <div id="vent-reply" style="display:none;gap:8px;margin-top:12px;">
+      <input id="vent-reply-text" type="text" placeholder="Continue falando..." style="flex:1;padding:11px 14px;border:1px solid var(--line);border-radius:999px;background:var(--bg-card);color:var(--ink);font-family:inherit;font-size:.92rem;">
+      <button id="vent-send" type="button">Enviar</button>
     </div>
     <div id="vent-help" style="display:none;margin-top:16px;border:1px solid var(--line);border-radius:18px;padding:14px;background:var(--bg-card);"></div>
     <div id="vent-log" style="margin-top:16px;display:grid;gap:8px;"></div>
@@ -2151,6 +2156,63 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ---- conversa com a IA ----
+  const chatEl = document.getElementById('vent-chat');
+  const replyEl = document.getElementById('vent-reply');
+  const replyInput = document.getElementById('vent-reply-text');
+  let conversa = [];
+  let pensando = false;
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function renderChat() {
+    chatEl.style.display = conversa.length ? 'flex' : 'none';
+    replyEl.style.display = conversa.length ? 'flex' : 'none';
+    chatEl.innerHTML = conversa.map(m => m.role === 'user'
+      ? `<div style="align-self:flex-end;max-width:85%;background:var(--primary);color:#fff;padding:10px 14px;border-radius:18px 18px 4px 18px;font-size:.9rem;">${esc(m.content)}</div>`
+      : `<div style="align-self:flex-start;max-width:88%;background:var(--bg-card);border:1px solid var(--line);color:var(--ink);padding:10px 14px;border-radius:18px 18px 18px 4px;font-size:.9rem;">${esc(m.content)}</div>`
+    ).join('') + (pensando
+      ? `<div style="align-self:flex-start;color:var(--ink-soft);font-size:.85rem;padding:4px 6px;">🌿 pensando...</div>` : '');
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  async function enviarParaIA() {
+    pensando = true; renderChat();
+    try {
+      const res = await fetch('/api/public/desabafo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: conversa, mood: humor })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.text) throw new Error('sem resposta');
+      conversa.push({ role: 'assistant', content: data.text });
+      pensando = false; renderChat();
+      helpEl.style.display = 'none';
+    } catch (e) {
+      pensando = false; renderChat();
+      const ultimo = conversa.filter(m => m.role === 'user').slice(-1)[0];
+      mostrarAjuda(ultimo ? ultimo.content : '', humor);
+      mostrarToast('Não consegui responder agora — deixei uma sugestão abaixo.');
+    }
+  }
+
+  function enviarMensagem(texto) {
+    if (!texto || pensando) return;
+    conversa.push({ role: 'user', content: texto });
+    renderChat();
+    enviarParaIA();
+  }
+
+  document.getElementById('vent-send').addEventListener('click', () => {
+    const t = replyInput.value.trim();
+    if (!t) return;
+    replyInput.value = '';
+    enviarMensagem(t);
+  });
+  replyInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('vent-send').click(); }
+  });
+
   moodsEl.addEventListener('click', (e) => {
     const b = e.target.closest('.vent-mood');
     if (!b) return;
@@ -2160,6 +2222,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('vent-toggle').addEventListener('click', () => {
     humor = null; textEl.value = ''; helpEl.style.display = 'none';
+    conversa = []; pensando = false; renderChat();
     renderMoods(); renderLog();
     panel.classList.add('open');
   });
@@ -2169,11 +2232,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!texto && !humor) { mostrarToast('Escreva algo ou escolha como se sente.'); return; }
     const m = MOODS.find(x => x.id === humor);
     const arr = lerLog();
-    arr.push({ data: new Date().toLocaleDateString('pt-BR'), emoji: m ? m.emoji : '🌿', mood: humor, texto });
-    salvarLog(arr);
-    renderLog();
-    mostrarAjuda(texto, humor);
-    mostrarToast('🌿 Guardado só para você.');
+    if (texto) {
+      arr.push({ data: new Date().toLocaleDateString('pt-BR'), emoji: m ? m.emoji : '🌿', mood: humor, texto });
+      salvarLog(arr);
+      renderLog();
+    }
+    textEl.value = '';
+    enviarMensagem(texto || `Me sinto ${(m ? m.label : 'assim').toLowerCase()} hoje.`);
   });
 })();
 </script>
