@@ -2085,6 +2085,97 @@ document.getElementById('screen-apply').addEventListener('click', () => {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('medit-timer').textContent = fmtTempo(medDuracao * 60);
 });
+
+// ---- Espaço de desabafo ----
+(function(){
+  const VENT_KEY = 'lifetree.vent.v1';
+  const panel = document.getElementById('vent-panel');
+  const moodsEl = document.getElementById('vent-moods');
+  const textEl = document.getElementById('vent-text');
+  const helpEl = document.getElementById('vent-help');
+  const logEl = document.getElementById('vent-log');
+  const MOODS = [
+    { id: 'ansioso', emoji: '😰', label: 'Ansioso' },
+    { id: 'triste', emoji: '😔', label: 'Triste' },
+    { id: 'cansado', emoji: '🥱', label: 'Cansado' },
+    { id: 'irritado', emoji: '😤', label: 'Irritado' },
+    { id: 'ok', emoji: '🙂', label: 'Ok' }
+  ];
+  let humor = null;
+
+  function lerLog() {
+    try { return JSON.parse(localStorage.getItem(VENT_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function salvarLog(arr) {
+    try { localStorage.setItem(VENT_KEY, JSON.stringify(arr.slice(-30))); } catch (e) {}
+  }
+  function renderMoods() {
+    moodsEl.innerHTML = MOODS.map(m => `<button type="button" class="vent-mood" data-mood="${m.id}" style="background:${humor === m.id ? 'var(--primary)' : 'var(--bg-card)'};color:${humor === m.id ? '#fff' : 'var(--ink)'};border:1px solid var(--line);box-shadow:none;font-size:.85rem;padding:8px 12px;border-radius:999px;">${m.emoji} ${m.label}</button>`).join('');
+  }
+  function renderLog() {
+    const itens = lerLog().slice().reverse().slice(0, 3);
+    logEl.innerHTML = itens.length
+      ? `<p style="color:var(--ink-soft);font-size:.8rem;margin:0;">Últimos registros</p>` + itens.map(i =>
+          `<div style="border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:.85rem;color:var(--ink-soft);"><b>${i.emoji || '🌿'} ${i.data}</b><br>${(i.texto || '').replace(/[<>]/g, '')}</div>`
+        ).join('')
+      : '';
+  }
+  function sugestao(texto, mood) {
+    const t = (texto || '').toLowerCase();
+    if (/(me matar|suic|não quero mais viver|nao quero mais viver|sumir para sempre)/.test(t)) {
+      return { titulo: 'Você não precisa passar por isso sozinho', corpo: 'Se a dor estiver grande demais, fale agora com o CVV: ligue <b>188</b> (24h, gratuito) ou acesse cvv.org.br. Falar com alguém já é um passo.', acao: null };
+    }
+    if (mood === 'ansioso' || /(ansi|pânico|panico|acelerad|preocup)/.test(t)) {
+      return { titulo: 'Vamos baixar o ritmo juntos', corpo: 'A ansiedade responde rápido à respiração lenta. Que tal 5 minutos guiados agora?', acao: 'medit' };
+    }
+    if (mood === 'cansado' || /(cansad|exaust|sem energia|sono)/.test(t)) {
+      return { titulo: 'Seu corpo está pedindo descanso', corpo: 'Não force o dia. Uma pausa sem tela de 10 minutos ou dormir mais cedo hoje já ajuda o cortisol a cair.', acao: null };
+    }
+    if (mood === 'irritado' || /(raiva|irrit|ódio|odio|estress)/.test(t)) {
+      return { titulo: 'Descarregue antes de decidir', corpo: 'Irritação costuma ceder com movimento: 10 minutos de caminhada ou alongamento mudam o corpo antes da cabeça.', acao: null };
+    }
+    if (mood === 'triste' || /(triste|sozinh|vazio|chor)/.test(t)) {
+      return { titulo: 'Tudo bem não estar bem', corpo: 'Mandar uma mensagem para alguém de confiança hoje conta como cuidado. Se isso se repetir por semanas, procurar um psicólogo é um bom passo.', acao: null };
+    }
+    return { titulo: 'Obrigado por escrever', corpo: 'Nomear o que você sente já reduz a resposta de estresse. Se quiser, respire 5 minutos para fechar esse momento.', acao: 'medit' };
+  }
+  function mostrarAjuda(texto, mood) {
+    const s = sugestao(texto, mood);
+    helpEl.innerHTML = `<b style="color:var(--primary);">${s.titulo}</b><p style="color:var(--ink-soft);font-size:.88rem;margin:6px 0 0;">${s.corpo}</p>` +
+      (s.acao === 'medit' ? `<div style="margin-top:10px;"><button id="vent-go-medit" type="button">🧘 Respirar 5 min</button></div>` : '');
+    helpEl.style.display = 'block';
+    const go = document.getElementById('vent-go-medit');
+    if (go) go.addEventListener('click', () => {
+      panel.classList.remove('open');
+      document.getElementById('medit-toggle').click();
+    });
+  }
+
+  moodsEl.addEventListener('click', (e) => {
+    const b = e.target.closest('.vent-mood');
+    if (!b) return;
+    humor = humor === b.dataset.mood ? null : b.dataset.mood;
+    renderMoods();
+  });
+
+  document.getElementById('vent-toggle').addEventListener('click', () => {
+    humor = null; textEl.value = ''; helpEl.style.display = 'none';
+    renderMoods(); renderLog();
+    panel.classList.add('open');
+  });
+  document.getElementById('vent-close').addEventListener('click', () => panel.classList.remove('open'));
+  document.getElementById('vent-save').addEventListener('click', () => {
+    const texto = textEl.value.trim();
+    if (!texto && !humor) { mostrarToast('Escreva algo ou escolha como se sente.'); return; }
+    const m = MOODS.find(x => x.id === humor);
+    const arr = lerLog();
+    arr.push({ data: new Date().toLocaleDateString('pt-BR'), emoji: m ? m.emoji : '🌿', mood: humor, texto });
+    salvarLog(arr);
+    renderLog();
+    mostrarAjuda(texto, humor);
+    mostrarToast('🌿 Guardado só para você.');
+  });
+})();
 </script>
 </body>
 </html>
